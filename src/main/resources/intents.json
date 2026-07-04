@@ -1,0 +1,160 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "hello",
+        "hi",
+        "hey",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "what's up",
+        "howdy",
+        "hi there",
+        "greetings"
+      ],
+      "responses": [
+        "Hello! How can I help you today?",
+        "Hey there! What's on your mind?",
+        "Hi! I'm Gilgamesh, your NLP chatbot. Ask me anything!",
+        "Greetings! How may I assist you?",
+        "Hello! What would you like to talk about?"
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": [
+        "bye",
+        "goodbye",
+        "see you later",
+        "see ya",
+        "take care",
+        "farewell",
+        "good night",
+        "catch you later",
+        "I'm leaving"
+      ],
+      "responses": [
+        "Goodbye! Have a great day!",
+        "See you later! Take care!",
+        "Farewell! It was nice chatting with you.",
+        "Bye! Come back anytime.",
+        "Until next time! 👋"
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": [
+        "thanks",
+        "thank you",
+        "that's helpful",
+        "thanks a lot",
+        "much appreciated",
+        "thank you so much",
+        "I appreciate it"
+      ],
+      "responses": [
+        "You're welcome!",
+        "Happy to help!",
+        "Anytime! That's what I'm here for.",
+        "Glad I could assist!",
+        "No problem at all!"
+      ]
+    },
+    {
+      "tag": "about",
+      "patterns": [
+        "who are you",
+        "what are you",
+        "tell me about yourself",
+        "what is your name",
+        "what can you do",
+        "who made you",
+        "what is gilgamesh",
+        "introduce yourself"
+      ],
+      "responses": [
+        "I'm Gilgamesh, an NLP chatbot built in Java using Apache OpenNLP. I classify your messages using token-overlap scoring!",
+        "I'm a chatbot named Gilgamesh. I use natural language processing to understand your intent and respond accordingly.",
+        "My name is Gilgamesh! I was built to demonstrate core NLP concepts like tokenization, stopword removal, and intent classification.",
+        "I'm an educational NLP chatbot. I process your text through tokenization and keyword matching to figure out what you mean."
+      ]
+    },
+    {
+      "tag": "help",
+      "patterns": [
+        "help",
+        "help me",
+        "I need help",
+        "what can I ask",
+        "how do I use this",
+        "commands",
+        "what do you understand",
+        "how does this work"
+      ],
+      "responses": [
+        "I can chat with you about various topics! Try saying hello, asking who I am, requesting a joke, or asking about the weather.",
+        "Just type naturally! I understand greetings, questions about myself, jokes, weather queries, and more. Type 'quit' to exit.",
+        "Here's what I can help with: greetings, farewells, jokes, weather talk, and questions about how I work. Just ask!",
+        "I'm an NLP chatbot — I understand your intent by analyzing your words. Try asking me something!"
+      ]
+    },
+    {
+      "tag": "weather",
+      "patterns": [
+        "weather",
+        "what's the weather",
+        "how's the weather",
+        "is it going to rain",
+        "is it sunny",
+        "temperature today",
+        "weather forecast",
+        "what's it like outside"
+      ],
+      "responses": [
+        "I can't check live weather data, but I can tell you that understanding weather queries is a classic NLP task! Try a weather API for real data.",
+        "I don't have access to weather services, but I recognized your weather intent! That's NLP in action.",
+        "Weather recognition — check! But I'm an offline NLP demo, so I can't fetch real forecasts. Try OpenWeatherMap for that!",
+        "I detected you're asking about weather! While I can't provide forecasts, recognizing this intent shows how NLP categorization works."
+      ]
+    },
+    {
+      "tag": "joke",
+      "patterns": [
+        "tell me a joke",
+        "joke",
+        "make me laugh",
+        "say something funny",
+        "got any jokes",
+        "humor me",
+        "tell a joke"
+      ],
+      "responses": [
+        "Why do Java developers wear glasses? Because they can't C#! 😄",
+        "What's a programmer's favorite hangout place? Foo Bar! 🍺",
+        "Why was the JavaScript developer sad? Because he didn't Node how to Express himself! 😂",
+        "How many programmers does it take to change a light bulb? None — that's a hardware problem! 💡",
+        "Why do programmers prefer dark mode? Because light attracts bugs! 🐛"
+      ]
+    },
+    {
+      "tag": "nlp_explanation",
+      "patterns": [
+        "what is NLP",
+        "explain NLP",
+        "natural language processing",
+        "how does NLP work",
+        "what is natural language processing",
+        "tell me about NLP",
+        "NLP basics"
+      ],
+      "responses": [
+        "NLP (Natural Language Processing) is a field of AI that helps computers understand, interpret, and generate human language. I use it right now to understand you!",
+        "Natural Language Processing combines linguistics and computer science to process human language. Key steps include tokenization, parsing, and semantic analysis.",
+        "NLP is how machines make sense of human text. In my case, I tokenize your input, remove stopwords, and match your words against known intent patterns!",
+        "NLP stands for Natural Language Processing. It's the technology behind chatbots, translators, and voice assistants. I'm a simple example of it in action!"
+      ]
+    }
+  ]
+}
