@@ -155,6 +155,20 @@
         "NLP is how machines make sense of human text. In my case, I tokenize your input, remove stopwords, and match your words against known intent patterns!",
         "NLP stands for Natural Language Processing. It's the technology behind chatbots, translators, and voice assistants. I'm a simple example of it in action!"
       ]
+    },
+    {
+      "tag": "datetime",
+      "patterns": [
+        "what day is it",
+        "what time is it",
+        "current date",
+        "current time",
+        "tell me the time",
+        "date today"
+      ],
+      "responses": [
+        "The time is dynamic!"
+      ]
     }
   ]
 }

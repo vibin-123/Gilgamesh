@@ -5,7 +5,12 @@ import com.gilgamesh.model.Intent;
 import com.gilgamesh.nlp.IntentClassifier;
 import com.gilgamesh.nlp.TextPreprocessor;
 import com.gilgamesh.response.ResponseEngine;
+import com.gilgamesh.response.IntentHandler;
+import com.gilgamesh.response.DateTimeIntentHandler;
+import com.gilgamesh.response.WeatherIntentHandler;
+import com.gilgamesh.response.StaticIntentHandler;
 
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -60,8 +65,13 @@ public class Main {
         // 3. Create the classifier (needs repository for intents and preprocessor for text cleaning)
         IntentClassifier classifier = new IntentClassifier(repository, preprocessor);
 
-        // 4. Create the response engine (selects responses for matched intents)
-        ResponseEngine responseEngine = new ResponseEngine();
+        // 4. Create the response engine with a chain of handlers
+        List<IntentHandler> handlers = List.of(
+                new DateTimeIntentHandler(),
+                new WeatherIntentHandler(),
+                new StaticIntentHandler()
+        );
+        ResponseEngine responseEngine = new ResponseEngine(handlers);
 
         System.out.println("Type your message below. Type 'quit' to exit.\n");
 
