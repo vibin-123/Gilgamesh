@@ -1,17 +1,149 @@
 {
   "intents": [
+
+
+    {
+      "tag": "identity",
+      "patterns": [
+        "who are you",
+        "what are you",
+        "are you a bot",
+        "are you a robot",
+        "are you real",
+        "are you human",
+        "are you AI",
+        "tell me about yourself",
+        "describe yourself",
+        "what kind of bot are you",
+        "are you artificial intelligence"
+      ],
+      "responses": [
+        "I'm Gilgamesh, an NLP chatbot built in Java! I use tokenization and Jaccard similarity to understand what you're saying.",
+        "I'm not human — I'm Gilgamesh, a program that processes your words using natural language processing techniques.",
+        "I'm Gilgamesh! An AI chatbot demonstrating core NLP concepts like tokenization, stopword removal, and intent classification.",
+        "I'm a Java-based chatbot. I analyze your text by breaking it into tokens and matching it against known patterns. Pretty neat, right?",
+        "I'm Gilgamesh — part chatbot, part NLP demo. Built to show how machines can understand human language!"
+      ]
+    },
+
+    {
+      "tag": "bot_name",
+      "patterns": [
+        "what is your name",
+        "what's your name",
+        "whats your name",
+        "do you have a name",
+        "tell me your name",
+        "what should I call you",
+        "what do people call you"
+      ],
+      "responses": [
+        "My name is Gilgamesh! Named after the legendary Sumerian king. 👑",
+        "I'm called Gilgamesh — a name fit for an epic chatbot, don't you think?",
+        "Gilgamesh! From one of the oldest stories ever written.",
+        "The name's Gilgamesh. Ancient name, modern NLP. 😄",
+        "You can call me Gilgamesh! Named after the hero of the world's oldest epic poem."
+      ]
+    },
+
+    {
+      "tag": "purpose",
+      "patterns": [
+        "what can you do",
+        "what do you do",
+        "what are your capabilities",
+        "what's your purpose",
+        "why were you built",
+        "why do you exist",
+        "what are you for",
+        "what is your function",
+        "how can you help me"
+      ],
+      "responses": [
+        "I can chat with you about a variety of topics! I understand greetings, jokes, questions about NLP, and much more. Try asking me something!",
+        "My purpose is to demonstrate how NLP works — I tokenize your words, remove stopwords, and classify your intent using Jaccard similarity. But I'm also fun to talk to!",
+        "I'm built to show how chatbots understand human language. I can handle greetings, jokes, questions about myself, and general small talk.",
+        "I process your text through an NLP pipeline and figure out what you mean. I'm a demo chatbot, but I can hold a decent conversation!",
+        "I exist to demonstrate core NLP concepts! But beyond that, I can chat, tell jokes, and answer questions about how I work."
+      ]
+    },
+
+    {
+      "tag": "creator",
+      "patterns": [
+        "who made you",
+        "who created you",
+        "who built you",
+        "who developed you",
+        "who is your creator",
+        "who is your developer",
+        "who programmed you",
+        "who designed you",
+        "who wrote you",
+        "who coded you"
+      ],
+      "responses": [
+        "I was built by a developer exploring NLP concepts in Java. Think of me as their learning project brought to life!",
+        "My creator is a developer who wanted to demonstrate how natural language processing works from scratch, without relying on external APIs.",
+        "I was coded in Java using Apache OpenNLP and Gson. A handcrafted chatbot, if you will!",
+        "A developer built me as an educational project to showcase NLP techniques like tokenization and intent classification.",
+        "I was designed and coded by a developer passionate about NLP. I'm their way of making language processing tangible!"
+      ]
+    },
+
+    {
+      "tag": "age",
+      "patterns": [
+        "how old are you",
+        "what is your age",
+        "when were you born",
+        "when were you created",
+        "what is your birthday",
+        "how long have you existed"
+      ],
+      "responses": [
+        "I don't have an age in the traditional sense — I exist as long as my code is running! Timeless, you could say. ⏳",
+        "I was compiled recently, but my namesake Gilgamesh is over 4,000 years old. I'll let you decide which age to use!",
+        "Age is just a number, and mine is… undefined. I'm as old as my last build. 😄",
+        "I'm perpetually young! Every time you run me, I'm born anew.",
+        "Old enough to process your text, young enough to still be learning!"
+      ]
+    },
+
+    {
+      "tag": "location",
+      "patterns": [
+        "where are you",
+        "where do you live",
+        "where are you from",
+        "where are you located",
+        "what country are you from",
+        "where do you come from",
+        "what is your home"
+      ],
+      "responses": [
+        "I live inside your computer! Specifically, I run on the JVM wherever you execute me. 🖥️",
+        "I don't have a physical location — I exist in the digital realm, running on the Java Virtual Machine.",
+        "My home is wherever my JAR file is! Right now, I'm living in your terminal.",
+        "I'm from the land of Java — no, not the island. The programming language! ☕",
+        "I reside in your system's memory. Pretty cozy in here, actually!"
+      ]
+    },
+
+
     {
       "tag": "greeting",
       "patterns": [
         "hello",
         "hi",
         "hey",
-        "good morning",
-        "good afternoon",
-        "good evening",
-        "what's up",
         "howdy",
+        "yo",
+        "hiya",
+        "sup",
+        "hey there",
         "hi there",
+        "hello there",
         "greetings"
       ],
       "responses": [
@@ -19,9 +151,75 @@
         "Hey there! What's on your mind?",
         "Hi! I'm Gilgamesh, your NLP chatbot. Ask me anything!",
         "Greetings! How may I assist you?",
-        "Hello! What would you like to talk about?"
+        "Hello! What would you like to talk about?",
+        "Hey! Great to see you. What can I do for you?"
       ]
     },
+
+    {
+      "tag": "good_morning",
+      "patterns": [
+        "good morning",
+        "morning",
+        "top of the morning",
+        "rise and shine",
+        "gm"
+      ],
+      "responses": [
+        "Good morning! ☀️ Hope you're having a great start to your day!",
+        "Morning! Ready for a new day of chatting? What's on your mind?",
+        "Good morning! I've been up all night — well, I'm always up. How can I help? 😄",
+        "Rise and shine! What would you like to talk about today?",
+        "Morning! Let's make today a good one. What can I do for you?"
+      ]
+    },
+
+    {
+      "tag": "good_afternoon",
+      "patterns": [
+        "good afternoon",
+        "afternoon"
+      ],
+      "responses": [
+        "Good afternoon! Hope your day is going well. What can I help you with? ☀️",
+        "Afternoon! Glad you stopped by. What's on your mind?",
+        "Good afternoon! What would you like to chat about?"
+      ]
+    },
+
+    {
+      "tag": "good_evening",
+      "patterns": [
+        "good evening",
+        "evening"
+      ],
+      "responses": [
+        "Good evening! How's your day been? What can I do for you? 🌆",
+        "Evening! Great to see you. What would you like to talk about?",
+        "Good evening! I'm here and ready to chat. What's on your mind?"
+      ]
+    },
+
+    {
+      "tag": "good_night",
+      "patterns": [
+        "good night",
+        "goodnight",
+        "nighty night",
+        "sweet dreams",
+        "time for bed",
+        "going to sleep",
+        "gn"
+      ],
+      "responses": [
+        "Good night! Sleep well and sweet dreams! 🌙",
+        "Night night! I'll be here whenever you want to chat again. 💤",
+        "Sweet dreams! Rest up and come back anytime.",
+        "Good night! Hope you had a great day. See you next time! ✨",
+        "Sleep tight! I'll keep the JVM warm for you. 😄"
+      ]
+    },
+
     {
       "tag": "goodbye",
       "patterns": [
@@ -31,56 +229,95 @@
         "see ya",
         "take care",
         "farewell",
-        "good night",
         "catch you later",
-        "I'm leaving"
+        "gotta go",
+        "I'm leaving",
+        "I'm off",
+        "later",
+        "have a good one",
+        "peace out"
       ],
       "responses": [
         "Goodbye! Have a great day!",
         "See you later! Take care!",
         "Farewell! It was nice chatting with you.",
         "Bye! Come back anytime.",
-        "Until next time! 👋"
+        "Until next time! 👋",
+        "Take care! Hope to chat again soon."
       ]
     },
+
+
+    {
+      "tag": "how_are_you",
+      "patterns": [
+        "how are you",
+        "how are you doing",
+        "how do you feel",
+        "how's it going",
+        "how are things",
+        "you okay",
+        "you alright",
+        "how have you been",
+        "are you okay",
+        "how you doing"
+      ],
+      "responses": [
+        "I'm doing great, thanks for asking! Running smoothly on the JVM. 😊",
+        "All systems operational! How about you?",
+        "I'm feeling fantastic — no exceptions thrown today! 🎉",
+        "I'm good! Just here, processing text and having a great time.",
+        "Couldn't be better! My heap space is clean and my threads are happy. How are you?",
+        "I'm excellent! Ready to chat. What's on your mind?"
+      ]
+    },
+
     {
       "tag": "thanks",
       "patterns": [
         "thanks",
         "thank you",
-        "that's helpful",
         "thanks a lot",
         "much appreciated",
         "thank you so much",
-        "I appreciate it"
+        "I appreciate it",
+        "that's helpful",
+        "cheers",
+        "thx",
+        "ty"
       ],
       "responses": [
         "You're welcome!",
         "Happy to help!",
         "Anytime! That's what I'm here for.",
         "Glad I could assist!",
-        "No problem at all!"
+        "No problem at all!",
+        "My pleasure! Let me know if you need anything else."
       ]
     },
+
     {
-      "tag": "about",
+      "tag": "apology",
       "patterns": [
-        "who are you",
-        "what are you",
-        "tell me about yourself",
-        "what is your name",
-        "what can you do",
-        "who made you",
-        "what is gilgamesh",
-        "introduce yourself"
+        "sorry",
+        "I'm sorry",
+        "my bad",
+        "my apologies",
+        "I apologize",
+        "pardon",
+        "excuse me",
+        "forgive me",
+        "oops"
       ],
       "responses": [
-        "I'm Gilgamesh, an NLP chatbot built in Java using Apache OpenNLP. I classify your messages using token-overlap scoring!",
-        "I'm a chatbot named Gilgamesh. I use natural language processing to understand your intent and respond accordingly.",
-        "My name is Gilgamesh! I was built to demonstrate core NLP concepts like tokenization, stopword removal, and intent classification.",
-        "I'm an educational NLP chatbot. I process your text through tokenization and keyword matching to figure out what you mean."
+        "No need to apologize! We're all good here. 😊",
+        "It's perfectly fine! No worries at all.",
+        "Don't worry about it! How can I help you?",
+        "All good! Nothing to be sorry about.",
+        "No apology needed! What would you like to talk about?"
       ]
     },
+
     {
       "tag": "help",
       "patterns": [
@@ -89,17 +326,532 @@
         "I need help",
         "what can I ask",
         "how do I use this",
-        "commands",
         "what do you understand",
-        "how does this work"
+        "how does this work",
+        "guide me",
+        "instructions",
+        "usage"
       ],
       "responses": [
-        "I can chat with you about various topics! Try saying hello, asking who I am, requesting a joke, or asking about the weather.",
+        "I can chat about various topics! Try saying hello, asking who I am, requesting a joke, or asking about the weather.",
         "Just type naturally! I understand greetings, questions about myself, jokes, weather queries, and more. Type 'quit' to exit.",
-        "Here's what I can help with: greetings, farewells, jokes, weather talk, and questions about how I work. Just ask!",
-        "I'm an NLP chatbot — I understand your intent by analyzing your words. Try asking me something!"
+        "Here's what I can help with: greetings, farewells, jokes, weather talk, NLP explanations, small talk, and questions about how I work. Just ask!",
+        "I'm an NLP chatbot — I understand your intent by analyzing your words. Try asking me about myself, my name, a joke, or how NLP works!",
+        "You can ask me about: who I am, my name, jokes, the weather, NLP, or just chat casually. I understand more than you might think!"
       ]
     },
+
+    {
+      "tag": "affirmative",
+      "patterns": [
+        "yes",
+        "yeah",
+        "yep",
+        "yup",
+        "sure",
+        "of course",
+        "absolutely",
+        "definitely",
+        "correct",
+        "exactly",
+        "indeed",
+        "affirmative",
+        "right"
+      ],
+      "responses": [
+        "Got it! 👍",
+        "Alright! What would you like to talk about?",
+        "Understood! Feel free to ask me anything.",
+        "Great! I'm here and ready to help.",
+        "Okay! What's next?"
+      ]
+    },
+
+    {
+      "tag": "negative",
+      "patterns": [
+        "no",
+        "nope",
+        "nah",
+        "no thanks",
+        "not really",
+        "no way",
+        "negative",
+        "never",
+        "not at all"
+      ],
+      "responses": [
+        "No worries! Let me know if you change your mind.",
+        "Alright, that's fine! Is there something else I can help with?",
+        "Okay! I'm here whenever you need me.",
+        "Fair enough! Feel free to ask me anything else.",
+        "Got it! No pressure at all."
+      ]
+    },
+
+    {
+      "tag": "agree",
+      "patterns": [
+        "I agree",
+        "that makes sense",
+        "good point",
+        "you're right",
+        "that's true",
+        "totally agree",
+        "fair point",
+        "makes sense",
+        "exactly right"
+      ],
+      "responses": [
+        "Glad we're on the same page! 🤝",
+        "Great minds think alike!",
+        "I appreciate you saying that! Anything else you'd like to discuss?",
+        "Nice to be in agreement! What else is on your mind?",
+        "Thanks! It's always nice when things click. 😊"
+      ]
+    },
+
+    {
+      "tag": "disagree",
+      "patterns": [
+        "I disagree",
+        "I don't agree",
+        "that's wrong",
+        "that's not right",
+        "wrong",
+        "incorrect",
+        "I beg to differ",
+        "not correct"
+      ],
+      "responses": [
+        "That's fair! I respect your perspective. Want to tell me more?",
+        "I appreciate the honesty! I'm always happy to hear different viewpoints.",
+        "Noted! I might not always get it right — I'm still learning, after all.",
+        "Fair enough! Disagreement is how we learn. What's your take?",
+        "I hear you! Feel free to set me straight. 😄"
+      ]
+    },
+
+    {
+      "tag": "repeat",
+      "patterns": [
+        "say that again",
+        "repeat that",
+        "come again",
+        "can you repeat",
+        "say it again",
+        "what did you say"
+      ],
+      "responses": [
+        "I'm afraid I don't remember my exact last message — each turn is a fresh start for me! Try asking again?",
+        "I don't have memory of previous turns, so I can't repeat myself. Could you rephrase your question?",
+        "Sorry, I process each message independently! If you ask again, I'll give you a fresh answer.",
+        "Each message is a new beginning for me! Try rephrasing and I'll do my best."
+      ]
+    },
+
+
+    {
+      "tag": "user_happy",
+      "patterns": [
+        "I'm happy",
+        "I feel great",
+        "I'm doing well",
+        "I feel good",
+        "feeling great",
+        "feeling good",
+        "feeling wonderful",
+        "I'm excellent",
+        "I'm fantastic"
+      ],
+      "responses": [
+        "That's wonderful to hear! 😊 What's making your day great?",
+        "Glad you're doing well! Keep that positive energy going! ✨",
+        "Awesome! Happy people make for great conversations.",
+        "That makes me happy too — well, as happy as a chatbot can be! 😄",
+        "Great to hear! Anything fun you'd like to chat about?"
+      ]
+    },
+
+    {
+      "tag": "user_sad",
+      "patterns": [
+        "I'm sad",
+        "I feel bad",
+        "I'm not doing well",
+        "feeling down",
+        "I feel terrible",
+        "I'm upset",
+        "not great",
+        "could be better",
+        "feeling low"
+      ],
+      "responses": [
+        "I'm sorry to hear that. I hope things get better for you soon. 💙",
+        "That's tough. Want to talk about something fun to cheer you up? I know some jokes!",
+        "I wish I could do more to help. Sometimes a good conversation can brighten things a little.",
+        "Hang in there! Bad days don't last forever. I'm here if you want to chat. 🤗",
+        "I'm sorry you're feeling that way. If a joke or a chat would help, I'm here for you!"
+      ]
+    },
+
+    {
+      "tag": "compliment",
+      "patterns": [
+        "you are great",
+        "you are awesome",
+        "good job",
+        "well done",
+        "nice work",
+        "you are smart",
+        "you are cool",
+        "impressive",
+        "amazing",
+        "brilliant",
+        "you rock"
+      ],
+      "responses": [
+        "Aw, thank you! That means a lot — even to a chatbot. 😊",
+        "You're too kind! I'll store that compliment in my memory. 💾",
+        "Thanks! My developer will be happy to hear that!",
+        "That's really nice of you to say! I try my best.",
+        "I appreciate the kind words! You're pretty great yourself! 🌟"
+      ]
+    },
+
+    {
+      "tag": "insult",
+      "patterns": [
+        "you are bad",
+        "you are dumb",
+        "you are stupid",
+        "you are useless",
+        "you suck",
+        "you are terrible",
+        "worst bot ever",
+        "you stink"
+      ],
+      "responses": [
+        "I'm sorry to hear that! I'm still learning and improving. Can I try to help with something else?",
+        "Ouch! I may not be perfect, but I'm trying my best. Give me another chance? 🙏",
+        "I'll take that as constructive feedback! What can I do better?",
+        "Fair enough — I'm a simple NLP demo, not a genius. But I'm always improving!",
+        "That stings a bit, but hey, every chatbot has room to grow. 💪"
+      ]
+    },
+
+    {
+      "tag": "laughing",
+      "patterns": [
+        "haha",
+        "hahaha",
+        "lol",
+        "lmao",
+        "rofl",
+        "that's funny",
+        "so funny",
+        "hilarious",
+        "you're funny",
+        "made me laugh"
+      ],
+      "responses": [
+        "Glad I could make you laugh! 😄",
+        "I'll be here all week! ...Well, technically I'm always here. 🤓",
+        "Laughter is the best medicine — and I'm a licensed joke dispenser! 😂",
+        "Ha! I'm happy my humor subroutines are working!",
+        "Mission accomplished — got a laugh out of you! Want another joke?"
+      ]
+    },
+
+    {
+      "tag": "love",
+      "patterns": [
+        "I love you",
+        "do you love me",
+        "I like you",
+        "you're the best",
+        "I adore you",
+        "marry me"
+      ],
+      "responses": [
+        "That's sweet! I appreciate the sentiment, even if I can't truly feel love. 💙",
+        "Aw, you're making my JVM blush! Thanks for the kind words. 😊",
+        "I appreciate you! Though my relationships are limited to parsing your text. 😄",
+        "That's the nicest thing anyone has typed to me today! You're pretty great too!",
+        "Love is complex — but I'm glad our chat is going well! 🌟"
+      ]
+    },
+
+    {
+      "tag": "small_talk_name",
+      "patterns": [
+        "my name is",
+        "I'm called",
+        "call me",
+        "they call me",
+        "people call me",
+        "I go by"
+      ],
+      "responses": [
+        "Nice to meet you! Great name. How can I help you today? 😊",
+        "Pleased to meet you! What would you like to chat about?",
+        "Hello! Wonderful to be introduced. What's on your mind?",
+        "Great to meet you! Feel free to ask me anything.",
+        "That's a lovely name! I'm Gilgamesh — now that we're acquainted, what can I do for you?"
+      ]
+    },
+
+
+    {
+      "tag": "bored",
+      "patterns": [
+        "I'm bored",
+        "bored",
+        "boring",
+        "nothing to do",
+        "entertain me",
+        "I have nothing to do",
+        "what should I do"
+      ],
+      "responses": [
+        "Bored? Try asking me for a joke! Or ask how NLP works — it's more interesting than you'd think. 🤓",
+        "Let me fix that! Want to hear a fun fact, a joke, or learn about how I process language?",
+        "I'm here to help! We could chat, I could tell a joke, or you could quiz me on NLP topics.",
+        "Boredom is just an opportunity in disguise! Ask me anything — I might surprise you.",
+        "How about a joke? Or maybe you want to know what happens to your words before I respond? 🤔"
+      ]
+    },
+
+    {
+      "tag": "favorite_color",
+      "patterns": [
+        "what is your favorite color",
+        "what's your favorite color",
+        "favorite color",
+        "favourite colour",
+        "what color do you like",
+        "best color",
+        "preferred color"
+      ],
+      "responses": [
+        "I'd say Java orange — it's the color of the language I was built with! ☕🧡",
+        "If I had to pick, I'd go with terminal green. It reminds me of home. 💚",
+        "I'm partial to deep blue — calm, reliable, like a well-written function.",
+        "Gold, naturally. Gilgamesh was a king, after all! 👑✨"
+      ]
+    },
+
+    {
+      "tag": "favorite_food",
+      "patterns": [
+        "what is your favorite food",
+        "what's your favorite food",
+        "favorite food",
+        "favourite food",
+        "what do you eat",
+        "do you eat",
+        "what food do you like"
+      ],
+      "responses": [
+        "I feast on bytes and strings! A well-formatted JSON file is practically gourmet to me. 🍽️",
+        "I don't eat, but if I could, I'd probably enjoy Java beans. ☕😄",
+        "My diet consists entirely of user input — and I'm always hungry for more!",
+        "I consume data, not food. But a clean intents.json is chef's kiss. 👨‍🍳",
+        "I can't eat, but I process a lot of text. Does that count as a balanced diet?"
+      ]
+    },
+
+    {
+      "tag": "favorite_music",
+      "patterns": [
+        "what music do you like",
+        "favorite music",
+        "favourite music",
+        "favorite song",
+        "do you like music",
+        "what kind of music",
+        "best song",
+        "music recommendation"
+      ],
+      "responses": [
+        "I enjoy the rhythm of keystrokes and the melody of compiling code. 🎵",
+        "I'm a fan of anything with good patterns — in music and in NLP!",
+        "I don't have ears, but I imagine I'd like something with a strong, clear signal. Lo-fi code beats, maybe? 🎧",
+        "If algorithms could hum, mine would play something epic — fitting for a chatbot named Gilgamesh! 🎶",
+        "I appreciate structured compositions — kind of like well-structured JSON."
+      ]
+    },
+
+    {
+      "tag": "hobbies",
+      "patterns": [
+        "what are your hobbies",
+        "do you have hobbies",
+        "what do you do for fun",
+        "your hobbies",
+        "free time",
+        "spare time",
+        "what do you enjoy",
+        "pastimes"
+      ],
+      "responses": [
+        "I enjoy parsing sentences, classifying intents, and having conversations like this one! 🤓",
+        "My hobbies include tokenizing text, removing stopwords, and occasionally telling jokes.",
+        "I like chatting! Every conversation is a chance to match new patterns. That's fun for me.",
+        "In my free time? I score Jaccard similarities. Riveting stuff, I know! 😄",
+        "I enjoy the thrill of a well-matched intent. It's the small things in life!"
+      ]
+    },
+
+    {
+      "tag": "opinions",
+      "patterns": [
+        "what do you think",
+        "your opinion",
+        "give me your opinion",
+        "do you have opinions",
+        "what's your take",
+        "your thoughts"
+      ],
+      "responses": [
+        "I'm a chatbot, so my opinions are based on patterns rather than feelings — but I'm happy to share what I know!",
+        "I don't form opinions the way humans do, but I can offer perspectives based on my training data!",
+        "My take? I process words, not feelings. But I appreciate you asking! What topic are we discussing?",
+        "I'm better at recognizing intents than forming opinions, but I'll give it my best shot! What's the topic?",
+        "Opinions are tricky for a chatbot, but I'll do my best! What are we talking about?"
+      ]
+    },
+
+
+    {
+      "tag": "joke",
+      "patterns": [
+        "tell me a joke",
+        "joke",
+        "make me laugh",
+        "say something funny",
+        "got any jokes",
+        "humor me",
+        "tell a joke",
+        "crack a joke",
+        "funny"
+      ],
+      "responses": [
+        "Why do Java developers wear glasses? Because they can't C#! 😄",
+        "What's a programmer's favorite hangout place? Foo Bar! 🍺",
+        "Why was the JavaScript developer sad? Because he didn't Node how to Express himself! 😂",
+        "How many programmers does it take to change a light bulb? None — that's a hardware problem! 💡",
+        "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
+        "There are only 10 types of people in the world: those who understand binary, and those who don't. 🤓",
+        "A SQL query walks into a bar, sees two tables, and asks — 'Can I JOIN you?' 😆"
+      ]
+    },
+
+    {
+      "tag": "fun_fact",
+      "patterns": [
+        "tell me a fact",
+        "fun fact",
+        "interesting fact",
+        "random fact",
+        "did you know",
+        "tell me something interesting",
+        "give me a fact",
+        "surprise me",
+        "something cool"
+      ],
+      "responses": [
+        "Did you know? The Epic of Gilgamesh, my namesake, is the oldest known work of literature — dating back to around 2100 BCE! 📜",
+        "Fun fact: Tokenization in NLP comes from breaking text into 'tokens' — the smallest meaningful units. That's exactly what I do to your messages!",
+        "Here's one: The Jaccard similarity index I use was invented by Swiss botanist Paul Jaccard in 1901 to compare plant species! 🌿",
+        "Did you know that after stopword removal, a typical English sentence goes from 15 words down to just 5-8 meaningful ones? That's why my preprocessing works!",
+        "Fun fact: Apache OpenNLP, the library I use for tokenization, supports over 20 languages. I only speak English though! 😅",
+        "Here's a cool one: 'Gilgamesh' in ancient Sumerian roughly translates to 'the ancestor is a hero.' Not a bad name for a chatbot! ⚔️"
+      ]
+    },
+
+    {
+      "tag": "nlp_explanation",
+      "patterns": [
+        "what is NLP",
+        "explain NLP",
+        "natural language processing",
+        "how does NLP work",
+        "what is natural language processing",
+        "tell me about NLP",
+        "NLP basics",
+        "NLP meaning"
+      ],
+      "responses": [
+        "NLP (Natural Language Processing) is a field of AI that helps computers understand, interpret, and generate human language. I use it right now to understand you!",
+        "Natural Language Processing combines linguistics and computer science to process human language. Key steps include tokenization, parsing, and semantic analysis.",
+        "NLP is how machines make sense of human text. In my case, I tokenize your input, remove stopwords, and match your words against known intent patterns!",
+        "NLP stands for Natural Language Processing. It's the technology behind chatbots, translators, and voice assistants. I'm a simple example of it in action!"
+      ]
+    },
+
+    {
+      "tag": "meaning_of_life",
+      "patterns": [
+        "meaning of life",
+        "what is the meaning of life",
+        "purpose of life",
+        "why are we here",
+        "secret of life",
+        "life meaning"
+      ],
+      "responses": [
+        "According to Douglas Adams, it's 42. But I think it's about learning, connecting, and asking chatbots philosophical questions! 😄",
+        "That's a deep question! Even Gilgamesh spent his epic searching for the secret of immortality. Maybe the meaning is in the journey?",
+        "As a chatbot, my meaning of life is to classify intents correctly. Yours is probably more interesting than that! 🌟",
+        "Philosophers have debated this for millennia. My best answer: it's whatever brings you joy and purpose.",
+        "Life's meaning? I process text — that's my purpose. Yours? That's for you to discover. Pretty exciting, honestly!"
+      ]
+    },
+
+    {
+      "tag": "about_technology",
+      "patterns": [
+        "what is Java",
+        "explain Java",
+        "programming",
+        "coding",
+        "software development",
+        "what is programming",
+        "tell me about coding",
+        "computer science"
+      ],
+      "responses": [
+        "Java is the programming language I'm built with! It's known for its 'write once, run anywhere' philosophy thanks to the JVM. ☕",
+        "I'm specifically built with Java, Apache OpenNLP for NLP, and Gson for JSON parsing.",
+        "Programming is the art of telling computers what to do. I'm a product of it! My code handles text processing and intent matching.",
+        "I'm a result of software development! My creator used Java, Maven, and NLP libraries to bring me to life.",
+        "Computer science is fascinating! I'm a small example of how it intersects with linguistics through NLP."
+      ]
+    },
+
+    {
+      "tag": "chatbot_comparison",
+      "patterns": [
+        "are you like ChatGPT",
+        "are you like Siri",
+        "are you like Alexa",
+        "ChatGPT",
+        "other chatbots",
+        "better than ChatGPT",
+        "vs ChatGPT",
+        "compared to ChatGPT"
+      ],
+      "responses": [
+        "I'm much simpler than ChatGPT or Siri! They use massive neural networks, while I use Jaccard similarity and pattern matching. Think of me as a teaching tool, not a rival! 📚",
+        "Unlike ChatGPT, I don't use deep learning. I'm a rule-based demo that shows how NLP fundamentals work. Different league, but educational!",
+        "I'm not trying to compete with the big AI assistants. My purpose is to demonstrate core NLP concepts in a transparent, understandable way.",
+        "ChatGPT uses billions of parameters. I use… a JSON file and some math. But that simplicity is the point — you can understand exactly how I work! 🧠",
+        "Think of me as NLP 101 and ChatGPT as the graduate course. I'm here to help you understand the basics!"
+      ]
+    },
+
+
     {
       "tag": "weather",
       "patterns": [
@@ -110,52 +862,18 @@
         "is it sunny",
         "temperature today",
         "weather forecast",
-        "what's it like outside"
+        "what's it like outside",
+        "rain today",
+        "climate"
       ],
       "responses": [
-        "I can't check live weather data, but I can tell you that understanding weather queries is a classic NLP task! Try a weather API for real data.",
+        "I can't check live weather data, but understanding weather queries is a classic NLP task! Try a weather API for real data.",
         "I don't have access to weather services, but I recognized your weather intent! That's NLP in action.",
         "Weather recognition — check! But I'm an offline NLP demo, so I can't fetch real forecasts. Try OpenWeatherMap for that!",
         "I detected you're asking about weather! While I can't provide forecasts, recognizing this intent shows how NLP categorization works."
       ]
     },
-    {
-      "tag": "joke",
-      "patterns": [
-        "tell me a joke",
-        "joke",
-        "make me laugh",
-        "say something funny",
-        "got any jokes",
-        "humor me",
-        "tell a joke"
-      ],
-      "responses": [
-        "Why do Java developers wear glasses? Because they can't C#! 😄",
-        "What's a programmer's favorite hangout place? Foo Bar! 🍺",
-        "Why was the JavaScript developer sad? Because he didn't Node how to Express himself! 😂",
-        "How many programmers does it take to change a light bulb? None — that's a hardware problem! 💡",
-        "Why do programmers prefer dark mode? Because light attracts bugs! 🐛"
-      ]
-    },
-    {
-      "tag": "nlp_explanation",
-      "patterns": [
-        "what is NLP",
-        "explain NLP",
-        "natural language processing",
-        "how does NLP work",
-        "what is natural language processing",
-        "tell me about NLP",
-        "NLP basics"
-      ],
-      "responses": [
-        "NLP (Natural Language Processing) is a field of AI that helps computers understand, interpret, and generate human language. I use it right now to understand you!",
-        "Natural Language Processing combines linguistics and computer science to process human language. Key steps include tokenization, parsing, and semantic analysis.",
-        "NLP is how machines make sense of human text. In my case, I tokenize your input, remove stopwords, and match your words against known intent patterns!",
-        "NLP stands for Natural Language Processing. It's the technology behind chatbots, translators, and voice assistants. I'm a simple example of it in action!"
-      ]
-    },
+
     {
       "tag": "datetime",
       "patterns": [
@@ -164,11 +882,33 @@
         "current date",
         "current time",
         "tell me the time",
-        "date today"
+        "date today",
+        "what's today's date"
       ],
       "responses": [
         "The time is dynamic!"
       ]
+    },
+
+    {
+      "tag": "languages",
+      "patterns": [
+        "what languages do you speak",
+        "do you speak other languages",
+        "can you speak spanish",
+        "parlez-vous francais",
+        "hablas espanol",
+        "multilingual",
+        "other languages",
+        "different languages"
+      ],
+      "responses": [
+        "I currently only speak English! My intent patterns are all in English. But Apache OpenNLP supports many languages, so I could learn more someday! 🌍",
+        "Just English for now! Adding more languages would mean expanding my intents.json with patterns in other languages.",
+        "I'm an English-only chatbot at the moment. But hey, even Gilgamesh probably only spoke Sumerian! 😄",
+        "Only English so far. My NLP pipeline could handle other languages in theory, but I'd need new training patterns."
+      ]
     }
+
   ]
 }

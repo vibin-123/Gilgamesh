@@ -25,20 +25,20 @@ import java.util.Set;
  * The chatbot processes each message through a series of NLP steps,
  * mirroring how real-world NLP systems work:
  *
- *   User Input (raw text)
- *       │
- *       ▼
- *   TextPreprocessor ─── Tokenization (OpenNLP SimpleTokenizer)
- *       │                 Lowercasing (case normalization)
- *       │                 Stopword Removal (noise reduction)
- *       ▼
- *   IntentClassifier ─── Jaccard Similarity Scoring
- *       │                 (bag-of-words comparison against patterns)
- *       ▼
- *   ResponseEngine ───── Template-based Response Selection
- *       │                 (random pick from matched intent's responses)
- *       ▼
- *   Bot Response (displayed to user)
+ * User Input (raw text)
+ * │
+ * ▼
+ * TextPreprocessor ─── Tokenization (OpenNLP SimpleTokenizer)
+ * │ Lowercasing (case normalization)
+ * │ Stopword Removal (noise reduction)
+ * ▼
+ * IntentClassifier ─── Jaccard Similarity Scoring
+ * │ (bag-of-words comparison against patterns)
+ * ▼
+ * ResponseEngine ───── Template-based Response Selection
+ * │ (random pick from matched intent's responses)
+ * ▼
+ * Bot Response (displayed to user)
  *
  * Each component is independent and could be swapped out. For example,
  * you could replace IntentClassifier's Jaccard scoring with a trained
@@ -62,15 +62,15 @@ public class Main {
         // 2. Create the text preprocessor (tokenization + stopwords)
         TextPreprocessor preprocessor = new TextPreprocessor();
 
-        // 3. Create the classifier (needs repository for intents and preprocessor for text cleaning)
+        // 3. Create the classifier (needs repository for intents and preprocessor for
+        // text cleaning)
         IntentClassifier classifier = new IntentClassifier(repository, preprocessor);
 
         // 4. Create the response engine with a chain of handlers
         List<IntentHandler> handlers = List.of(
                 new DateTimeIntentHandler(),
                 new WeatherIntentHandler(),
-                new StaticIntentHandler()
-        );
+                new StaticIntentHandler());
         ResponseEngine responseEngine = new ResponseEngine(handlers);
 
         System.out.println("Type your message below. Type 'quit' to exit.\n");
@@ -120,10 +120,10 @@ public class Main {
     private static void printBanner() {
         System.out.println();
         System.out.println("╔══════════════════════════════════════════════════╗");
-        System.out.println("║           ⚔  GILGAMESH NLP CHATBOT  ⚔          ║");
+        System.out.println("║           ⚔  GILGAMESH NLP CHATBOT  ⚔           ║");
         System.out.println("║                                                  ║");
         System.out.println("║  A Java chatbot demonstrating core NLP concepts  ║");
-        System.out.println("║  Powered by Apache OpenNLP                       ║");
+        System.out.println("║                                                  ║");
         System.out.println("╚══════════════════════════════════════════════════╝");
         System.out.println();
     }

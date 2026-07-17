@@ -57,12 +57,17 @@ public class TextPreprocessor {
     private static final Set<String> STOPWORDS = Set.of(
             // Articles
             "a", "an", "the",
-            // Pronouns
+            // Personal pronouns
+            // Note: "you" and "your" are kept as stopwords because they rarely
+            // distinguish intents on their own. However, question words (who, what,
+            // how, when, where, why, which) are intentionally NOT stopwords — they
+            // define the type of question and are essential for classifying inputs
+            // like "who are you" or "how are you doing".
             "i", "me", "my", "you", "your", "he", "she", "it", "we", "they",
             "him", "her", "us", "them", "its", "our", "their",
             // Prepositions
             "in", "on", "at", "to", "for", "of", "with", "by", "from", "up",
-            "about", "into", "through", "during", "before", "after",
+            "into", "through", "during", "before", "after",
             // Conjunctions
             "and", "but", "or", "nor", "so", "yet",
             // Auxiliary / linking verbs
@@ -70,9 +75,8 @@ public class TextPreprocessor {
             "have", "has", "had", "do", "does", "did",
             "will", "would", "shall", "should", "may", "might", "must",
             "can", "could",
-            // Other common stopwords
+            // Other filler stopwords
             "not", "no", "this", "that", "these", "those",
-            "what", "which", "who", "whom", "when", "where", "why", "how",
             "if", "then", "than", "too", "very", "just",
             "there", "here", "all", "any", "each", "some",
             // Common contractions (after tokenization splits them)
