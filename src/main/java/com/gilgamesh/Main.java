@@ -9,6 +9,7 @@ import com.gilgamesh.response.IntentHandler;
 import com.gilgamesh.response.DateTimeIntentHandler;
 import com.gilgamesh.response.WeatherIntentHandler;
 import com.gilgamesh.response.StaticIntentHandler;
+import com.gilgamesh.memory.ConversationContext;
 
 import java.util.List;
 import java.util.Scanner;
@@ -73,6 +74,9 @@ public class Main {
                 new StaticIntentHandler());
         ResponseEngine responseEngine = new ResponseEngine(handlers);
 
+        // 5. Create the short-term conversation memory context
+        ConversationContext context = new ConversationContext();
+
         System.out.println("Type your message below. Type 'quit' to exit.\n");
 
         // --- Chat Loop (REPL) ---
@@ -105,6 +109,9 @@ public class Main {
 
             // Step 3: Response generation
             String response = responseEngine.generateResponse(matchedIntent);
+
+            // Step 4: Update Conversation Context
+            context.update(input, response, matchedIntent);
 
             // Display the response
             System.out.println("Gilgamesh: " + response);
