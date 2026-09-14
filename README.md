@@ -1,6 +1,6 @@
 # ⚔ Gilgamesh — Java NLP Chatbot
 
-A Java-based chatbot that demonstrates **core Natural Language Processing (NLP) concepts** without calling any external APIs. Built with **Apache OpenNLP** for tokenization and **Jaccard similarity scoring** for intent classification.
+A Java-based chatbot that demonstrates **advanced Natural Language Processing (NLP) concepts** without calling any external APIs. Originally built with basic tokenization and Jaccard similarity, Gilgamesh has been upgraded with a powerful hybrid classifier, conversation context memory, anaphora resolution, and a full text-preprocessing pipeline.
 
 ---
 
@@ -10,61 +10,69 @@ A Java-based chatbot that demonstrates **core Natural Language Processing (NLP) 
 User Input (raw text)
       │
       ▼
-┌──────────────────┐
-│ TextPreprocessor  │  ← Tokenization (OpenNLP), Lowercasing, Stopword Removal
-└───────┬──────────┘
-        ▼
-┌──────────────────┐     ┌──────────────────┐
-│ IntentClassifier  │◄────│ IntentRepository  │  ← Loads intents.json
-│ (Jaccard Scoring) │     └──────────────────┘
-└───────┬──────────┘
-        ▼
-┌──────────────────┐
-│  ResponseEngine   │  ← Random template-based response selection
-└───────┬──────────┘
-        ▼
-   Bot Response
+┌───────────────────────────────────────────────┐
+│              ReferenceResolver                │  ← Anaphora Resolution ("it", "he", "she")
+│    (Uses active ConversationContext memory)   │
+└─────────────────────┬─────────────────────────┘
+                      ▼
+┌───────────────────────────────────────────────┐
+│              TextPreprocessor                 │
+│  1. Tokenization (OpenNLP SimpleTokenizer)    │
+│  2. Lowercasing & Punctuation Removal         │
+│  3. Spell Correction (Levenshtein Distance)   │
+│  4. Stopword Removal                          │
+│  5. Synonym Normalization                     │
+│  6. Stemming (Porter Stemmer)                 │
+└─────────────────────┬─────────────────────────┘
+                      ▼
+┌───────────────────────────────────────────────┐     ┌──────────────────┐
+│              IntentClassifier                 │◄────│ IntentRepository │
+│  - Jaccard Similarity (Token Overlap)         │     │ (intents.json)   │
+│  - TF-IDF & Cosine Similarity                 │     └──────────────────┘
+│  - Context-Aware Boosting                     │
+└─────────────────────┬─────────────────────────┘
+                      ▼
+┌───────────────────────────────────────────────┐
+│               ResponseEngine                  │
+│  - Stateful Template Processor (Variations)   │
+│  - Dynamic Variables ({time}, {date}, {topic})│
+│  - Progressive Smart Fallbacks                │
+└─────────────────────┬─────────────────────────┘
+                      ▼
+┌───────────────────────────────────────────────┐
+│             ConversationContext               │  ← Updates short-term memory
+└─────────────────────┬─────────────────────────┘
+                      ▼
+                 Bot Response
 ```
-
-### Component Breakdown
-
-| Class | Package | NLP Role |
-|-------|---------|----------|
-| `Main.java` | `com.gilgamesh` | Entry point — wires components, runs the chat REPL |
-| `TextPreprocessor.java` | `com.gilgamesh.nlp` | **Tokenization** (OpenNLP), **case normalization**, **stopword removal** |
-| `IntentClassifier.java` | `com.gilgamesh.nlp` | **Intent classification** via Jaccard similarity (bag-of-words) |
-| `IntentRepository.java` | `com.gilgamesh.data` | Loads & parses training data from `intents.json` |
-| `ResponseEngine.java` | `com.gilgamesh.response` | **Response generation** — template-based with random selection |
-| `Intent.java` | `com.gilgamesh.model` | Data model representing an intent (tag, patterns, responses) |
 
 ---
 
-## 🧠 NLP Concepts Demonstrated
+## 🧠 Advanced NLP Concepts Demonstrated
 
-### 1. Tokenization
-Splitting raw text into individual tokens (words). We use **OpenNLP's `SimpleTokenizer`** which handles punctuation-aware splitting — e.g., `"hello!"` → `["hello", "!"]` instead of treating it as one token.
+### 1. Tokenization & Normalization
+Splitting raw text into individual tokens using **OpenNLP's `SimpleTokenizer`**. All text is lowercased and stripped of punctuation for consistent processing.
 
-### 2. Case Normalization
-Converting all text to lowercase so that `"Hello"`, `"HELLO"`, and `"hello"` are treated identically. Essential for consistent matching.
+### 2. Stemming
+Using a custom pure-Java **Porter Stemmer**, we reduce inflected words to their root forms (e.g., `"running"`, `"runs"`, `"ran"` all become `"run"`), allowing our classifier to match intents regardless of grammatical tense.
 
-### 3. Stopword Removal
-Filtering out common words (`the`, `is`, `a`, `in`, etc.) that carry little semantic meaning. This focuses the classifier on content-bearing keywords. For example:
-- `"what is the weather today"` → `["weather", "today"]`
+### 3. Synonym Matching
+A `SynonymProvider` normalizes token variations to canonical forms. For example, `"creator"`, `"developer"`, and `"author"` are all mapped to `"creator"`.
 
-### 4. Bag-of-Words Representation
-Treating text as an unordered set of words, ignoring grammar and word order. This simplification is sufficient for intent classification where keywords matter more than structure.
+### 4. Fuzzy Spell Correction
+A `SpellChecker` uses the **Levenshtein Edit Distance** algorithm to correct user typos against the chatbot's domain vocabulary (e.g., `"wether"` → `"weather"`).
 
-### 5. Jaccard Similarity Scoring
-Measuring the overlap between two word sets:
+### 5. TF-IDF & Cosine Similarity
+In addition to basic Jaccard (bag-of-words) similarity, Gilgamesh uses a **Term Frequency - Inverse Document Frequency (TF-IDF)** vectorizer. This ensures that rare, highly indicative words carry more weight in the classification score than common words.
 
-```
-J(A, B) = |A ∩ B| / |A ∪ B|
-```
+### 6. Anaphora / Reference Resolution
+The chatbot maintains a sliding window of conversation history in `ConversationContext`. The `ReferenceResolver` resolves ambiguous pronouns based on recent topics (e.g., if the topic is `"Gilgamesh"`, the input `"Who created it?"` is resolved to `"Who created Gilgamesh?"`).
 
-Produces a score between `0.0` (no overlap) and `1.0` (identical). The intent whose pattern produces the highest score is selected.
+### 7. Context-Aware Classification
+Intents that align with the current active conversation topic receive a confidence score boost, allowing the chatbot to gracefully handle contextual follow-up questions.
 
-### 6. Confidence Thresholding
-If the best Jaccard score falls below `0.15`, the input is considered unrecognized and a fallback response is returned. This prevents false matches on unrelated inputs.
+### 8. Progressive Fallbacks & Dynamic Responses
+The `ResponseEngine` prevents repeating the exact same response consecutively and substitutes dynamic variables like `{time}` and `{topic}`. If the bot fails to understand the user multiple times, the `FallbackHandler` provides escalating, helpful suggestions rather than repeating the same error message.
 
 ---
 
@@ -80,13 +88,22 @@ Gilgamesh/
         │   ├── Main.java                      # Entry point (chat loop)
         │   ├── model/
         │   │   └── Intent.java                # Intent data model
+        │   ├── memory/
+        │   │   └── ConversationContext.java   # Short-term memory state
         │   ├── nlp/
-        │   │   ├── TextPreprocessor.java       # Tokenization + stopwords
-        │   │   └── IntentClassifier.java       # Jaccard-based classifier
+        │   │   ├── TextPreprocessor.java      # NLP Pipeline 
+        │   │   ├── PorterStemmer.java         # Stemming
+        │   │   ├── SynonymProvider.java       # Synonym normalization
+        │   │   ├── SpellChecker.java          # Edit distance spell checking
+        │   │   ├── TfidfVectorizer.java       # TF-IDF & Cosine Similarity
+        │   │   ├── ReferenceResolver.java     # Anaphora resolution
+        │   │   └── IntentClassifier.java      # Hybrid classification engine
         │   ├── data/
-        │   │   └── IntentRepository.java       # JSON data loader
+        │   │   └── IntentRepository.java      # JSON data loader
         │   └── response/
-        │       └── ResponseEngine.java         # Response selection
+        │       ├── ResponseEngine.java        # Response orchestrator
+        │       ├── ResponseTemplateProcessor.java # Dynamic variable interpolation
+        │       └── FallbackHandler.java       # Progressive fallback logic
         └── resources/
             └── intents.json                   # Intent definitions
 ```
@@ -96,43 +113,19 @@ Gilgamesh/
 ## 🚀 How to Build & Run
 
 ### Prerequisites
-- **Java 17+** installed (`java --version`)
-- **Maven 3.8+** installed (`mvn --version`)
+- **Java 17+** installed (`java -version`)
+- **Maven** (A Maven Wrapper is included in the project)
 
 ### Build
+Run tests and compile the project into a runnable fat JAR:
 ```bash
-mvn clean package
+./mvnw clean package
 ```
-
-This compiles the project and creates a runnable fat JAR in `target/`.
+*(On Windows, use `.\mvnw.cmd clean package`)*
 
 ### Run
 ```bash
-java -jar target/gilgamesh-chatbot-1.0.0.jar
-```
-
-### Example Conversation
-```
-╔══════════════════════════════════════════════════╗
-║           ⚔  GILGAMESH NLP CHATBOT  ⚔          ║
-║                                                  ║
-║  A Java chatbot demonstrating core NLP concepts  ║
-║  Powered by Apache OpenNLP                       ║
-╚══════════════════════════════════════════════════╝
-
-Type your message below. Type 'quit' to exit.
-
-You: Hello there!
-Gilgamesh: Hey there! What's on your mind?
-
-You: Tell me a joke
-Gilgamesh: Why do Java developers wear glasses? Because they can't C#! 😄
-
-You: What is NLP?
-Gilgamesh: NLP is how machines make sense of human text. In my case, I tokenize your input, remove stopwords, and match your words against known intent patterns!
-
-You: quit
-Gilgamesh: Goodbye! It was great chatting with you. 👋
+java -jar target/gilgamesh-chatbot-1.0.0-shaded.jar
 ```
 
 ---
@@ -147,32 +140,17 @@ Edit `src/main/resources/intents.json` to add or modify intents:
     {
       "tag": "your_new_intent",
       "patterns": ["example phrase 1", "example phrase 2"],
-      "responses": ["Response A", "Response B"]
+      "responses": ["Response A {topic}", "Response B at {time}"]
     }
   ]
 }
 ```
 
-After editing, rebuild with `mvn clean package`.
+After editing, rebuild with `./mvnw clean package`.
 
 **Tips for good patterns:**
-- Include multiple variations of how a user might express the intent
-- Use short, keyword-rich phrases
-- The more patterns, the better the classifier can match
-
----
-
-## 📖 Further Learning
-
-Want to extend this project? Here are some ideas:
-
-| Enhancement | Concept |
-|-------------|---------|
-| Add TF-IDF weighting | Rare words become more important than common ones |
-| Use OpenNLP `DocumentCategorizer` | Train a real ML classifier from the patterns |
-| Add stemming/lemmatization | Treat "running", "runs", "ran" as the same word |
-| Implement context tracking | Remember previous messages for multi-turn conversations |
-| Add entity extraction | Pull out specific values (dates, names) from user input |
+- Include multiple variations of how a user might express the intent.
+- The `SpellChecker` automatically populates its vocabulary from your patterns.
 
 ---
 
@@ -181,4 +159,5 @@ Want to extend this project? Here are some ideas:
 - **Java 17**
 - **Apache OpenNLP 2.4.0** — Tokenization
 - **Gson 2.11.0** — JSON parsing
+- **JUnit 5** — Automated testing
 - **Maven** — Build & dependency management
