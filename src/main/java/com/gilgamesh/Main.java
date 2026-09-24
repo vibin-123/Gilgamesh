@@ -48,6 +48,20 @@ public class Main {
         // 6. Create short-term conversation memory context
         ConversationContext context = new ConversationContext();
 
+        // 7. Create entity extractor & turn analyzer for multi-turn discourse
+        com.gilgamesh.nlp.EntityExtractor entityExtractor = new com.gilgamesh.nlp.EntityExtractor();
+        com.gilgamesh.memory.TurnAnalyzer turnAnalyzer = new com.gilgamesh.memory.TurnAnalyzer(entityExtractor);
+
+        // 8. Create multi-turn conversation manager orchestrator
+        ConversationManager conversationManager = new ConversationManager(
+                entityExtractor,
+                turnAnalyzer,
+                referenceResolver,
+                classifier,
+                responseEngine,
+                context
+        );
+
         System.out.println("Type your message below. Type 'quit' to exit.\n");
 
         Scanner scanner = new Scanner(System.in);
@@ -69,19 +83,10 @@ public class Main {
                 break;
             }
 
-            // Step 1: Anaphora / Reference Resolution using active context
-            String resolvedInput = referenceResolver.resolveReferences(input, context);
+            // Process message through full multi-turn conversation pipeline
+            String response = conversationManager.processMessage(input);
 
-            // Step 2: Context-Aware Hybrid Intent Classification
-            Intent matchedIntent = classifier.classify(resolvedInput, context);
-
-            // Step 3: Stateful Response Generation & Dynamic Templating
-            String response = responseEngine.generateResponse(matchedIntent, context);
-
-            // Step 4: Update Conversation Memory
-            context.update(input, response, matchedIntent);
-
-            // Step 5: Display response
+            // Display response
             System.out.println("Gilgamesh: " + response);
             System.out.println();
         }

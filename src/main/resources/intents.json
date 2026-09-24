@@ -80,7 +80,12 @@
         "who programmed you",
         "who designed you",
         "who wrote you",
-        "who coded you"
+        "who coded you",
+        "who created Gilgamesh",
+        "who built Gilgamesh",
+        "who developed Gilgamesh",
+        "who made Gilgamesh",
+        "who is the creator of Gilgamesh"
       ],
       "responses": [
         "I was built by a developer exploring NLP concepts in Java. Think of me as their learning project brought to life!",
@@ -281,7 +286,8 @@
         "much appreciated",
         "thank you so much",
         "I appreciate it",
-        "that's helpful",
+        "thanks for the help",
+        "thanks that's helpful",
         "cheers",
         "thx",
         "ty"
@@ -814,6 +820,10 @@
       "patterns": [
         "what is Java",
         "explain Java",
+        "tell me about Java",
+        "describe Java",
+        "what is Java language",
+        "Java programming",
         "programming",
         "coding",
         "software development",
@@ -907,6 +917,108 @@
         "Just English for now! Adding more languages would mean expanding my intents.json with patterns in other languages.",
         "I'm an English-only chatbot at the moment. But hey, even Gilgamesh probably only spoke Sumerian! 😄",
         "Only English so far. My NLP pipeline could handle other languages in theory, but I'd need new training patterns."
+      ]
+    },
+
+    {
+      "tag": "about_python",
+      "patterns": [
+        "what is Python",
+        "explain Python",
+        "tell me about Python",
+        "describe Python",
+        "what is Python language",
+        "Python programming",
+        "information about Python"
+      ],
+      "responses": [
+        "Python is a versatile, high-level programming language known for its clear syntax and readability. It is widely used in data science, artificial intelligence, and web development.",
+        "Python is an interpreted, general-purpose programming language designed with an emphasis on code readability and simplicity.",
+        "Python is one of the world's most popular programming languages, powering everything from machine learning models to web servers."
+      ]
+    },
+
+    {
+      "tag": "java_creator",
+      "patterns": [
+        "who created Java",
+        "who developed Java",
+        "who is the creator of Java",
+        "who made Java",
+        "who invented Java",
+        "who built Java",
+        "who wrote Java",
+        "who designed Java",
+        "who is the author of Java"
+      ],
+      "responses": [
+        "James Gosling created Java in 1995 while working at Sun Microsystems.",
+        "Java was created by James Gosling at Sun Microsystems in the mid-1990s.",
+        "James Gosling is widely known as the father of Java, having designed the original language and compiler at Sun Microsystems."
+      ]
+    },
+
+    {
+      "tag": "python_creator",
+      "patterns": [
+        "who created Python",
+        "who developed Python",
+        "who is the creator of Python",
+        "who made Python",
+        "who invented Python",
+        "who built Python",
+        "who wrote Python",
+        "who designed Python",
+        "who is the author of Python"
+      ],
+      "responses": [
+        "Python was created by Guido van Rossum and first released in 1991.",
+        "Guido van Rossum created Python in the late 1980s as a successor to the ABC language, officially releasing it in 1991.",
+        "Guido van Rossum is the creator and original Benevolent Dictator For Life (BDFL) of Python."
+      ]
+    },
+
+    {
+      "tag": "java_advantages",
+      "patterns": [
+        "what are Java's advantages",
+        "what are the advantages of Java",
+        "Java advantages",
+        "Java's advantages",
+        "advantages of Java",
+        "what are Java advantages",
+        "tell me Java's advantages",
+        "tell me about Java's advantages",
+        "Java features",
+        "benefits of Java",
+        "why use Java"
+      ],
+      "responses": [
+        "Java has several advantages: platform independence (Write Once, Run Anywhere via the JVM), strong static type safety, automatic garbage collection, and robust enterprise scalability.",
+        "Key advantages of Java include cross-platform portability, high performance with modern JIT compilers, extensive libraries, and strong multithreading support.",
+        "Java offers major advantages: write once run anywhere, strong memory management, exceptional backward compatibility, and an enormous ecosystem."
+      ]
+    },
+
+    {
+      "tag": "python_advantages",
+      "patterns": [
+        "what are Python's advantages",
+        "what are the advantages of Python",
+        "Python advantages",
+        "Python's advantages",
+        "advantages of Python",
+        "what are Python advantages",
+        "tell me Python's advantages",
+        "tell me about Python's advantages",
+        "Python features",
+        "benefits of Python",
+        "why use Python"
+      ],
+      "responses": [
+        "Python has several advantages: clear, readable syntax that accelerates development, an enormous library ecosystem, dynamic typing, and industry dominance in AI and data science.",
+        "Python's advantages include simplicity, high developer productivity, cross-platform portability, and powerful frameworks for machine learning and web development.",
+        "Key advantages of Python: easy to learn and read, versatile for scripting and large projects, and unmatched support for artificial intelligence."
       ]
     }
 

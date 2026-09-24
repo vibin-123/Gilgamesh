@@ -38,10 +38,26 @@ public class IntentClassifier {
 
     private void initVectorizer() {
         if (repository != null && repository.getIntents() != null) {
-            // Train TF-IDF vectorizer on intent corpus patterns
+            // 1. Collect all raw, unstemmed vocabulary words from intent patterns and
+            // register them into the spell checker so valid words are never falsely corrected
+            Set<String> rawVocab = new HashSet<>();
+            for (Intent intent : repository.getIntents()) {
+                for (String pattern : intent.getPatterns()) {
+                    String[] words = pattern.toLowerCase().split("[^a-z0-9]+");
+                    for (String w : words) {
+                        if (w.length() > 2) {
+                            rawVocab.add(w);
+                        }
+                    }
+                }
+            }
+            rawVocab.addAll(Set.of("tell", "about", "python", "java", "what", "who", "where", "when", "why", "how", "can", "please"));
+            preprocessor.registerVocabulary(rawVocab);
+
+            // 2. Train TF-IDF vectorizer on intent corpus patterns
             tfidfVectorizer.fit(repository.getIntents(), preprocessor);
 
-            // Precompute TF-IDF vectors for all pattern documents
+            // 3. Precompute TF-IDF vectors for all pattern documents
             for (Intent intent : repository.getIntents()) {
                 for (String pattern : intent.getPatterns()) {
                     List<String> tokens = preprocessor.preprocess(pattern);
@@ -49,10 +65,6 @@ public class IntentClassifier {
                     patternTfidfVectors.put(pattern, vec);
                 }
             }
-
-            // Register intent pattern vocabulary into preprocessor's spell checker
-            Set<String> vocab = new HashSet<>(tfidfVectorizer.getVocabulary());
-            preprocessor.registerVocabulary(vocab);
         }
     }
 
