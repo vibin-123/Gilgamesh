@@ -1,4 +1,4 @@
-# ⚔ Gilgamesh — Java NLP Chatbot
+# Gilgamesh — Java NLP Chatbot
 
 A Java-based chatbot that demonstrates **advanced Natural Language Processing (NLP) concepts** without calling any external APIs. Originally built with basic tokenization and Jaccard similarity, Gilgamesh has been upgraded with a powerful hybrid classifier, conversation context memory, anaphora resolution, and a full text-preprocessing pipeline.
 
