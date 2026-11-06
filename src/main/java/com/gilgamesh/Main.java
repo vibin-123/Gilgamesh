@@ -100,7 +100,7 @@ public class Main {
         System.out.println("║           ⚔  GILGAMESH NLP CHATBOT  ⚔           ║");
         System.out.println("║                                                  ║");
         System.out.println("║  A Java chatbot demonstrating core NLP concepts  ║");
-        System.out.println("║  Featuring TF-IDF, Stemming, Synonyms & Anaphora  ║");
+       System.out.println("║  Featuring TF-IDF, Stemming, Synonyms & Anaphora  ║");
         System.out.println("╚══════════════════════════════════════════════════╝");
         System.out.println();
     }

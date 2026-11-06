@@ -1,8 +1,12 @@
 package com.gilgamesh.memory;
 
 import com.gilgamesh.model.Intent;
+import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -17,6 +21,7 @@ import java.util.List;
  *   - The timestamp of the last interaction
  *   - Active turn count since the last reset or expiration
  *   - Recent entities extracted from conversation turns
+ *   - A topic stack for suspending and resuming previous conversation topics
  *
  * This context is configured to automatically expire after either:
  *   - A maximum number of turns (maxSessionTurns)
@@ -31,6 +36,8 @@ public class ConversationContext {
     public static final int DEFAULT_MAX_SESSION_TURNS = 20;
     public static final long DEFAULT_INACTIVITY_TIMEOUT_MS = 300_000; // 5 minutes
     private static final int DEFAULT_MAX_ENTITIES = 20;
+    private static final int DEFAULT_MAX_STACK_DEPTH = 5;
+    private static final long DEFAULT_SUSPENDED_TOPIC_TIMEOUT_MS = 600_000; // 10 minutes
 
     private int maxHistorySize;
     private int maxSessionTurns;
@@ -43,6 +50,8 @@ public class ConversationContext {
     private String currentTopic;
     private final List<ConversationTurn> history;
     private final List<Entity> recentEntities;
+    private final Deque<TopicState> topicStack;
+    private int maxStackDepth;
     private long lastInteractionTimestamp;
     private int turnCount;
 
@@ -66,6 +75,8 @@ public class ConversationContext {
         this.inactivityTimeoutMs = inactivityTimeoutMs;
         this.history = new ArrayList<>();
         this.recentEntities = new ArrayList<>();
+        this.topicStack = new ArrayDeque<>();
+        this.maxStackDepth = DEFAULT_MAX_STACK_DEPTH;
         resetState();
     }
 
@@ -298,6 +309,7 @@ public class ConversationContext {
         this.currentTopic = "unknown";
         this.history.clear();
         this.recentEntities.clear();
+        this.topicStack.clear();
         this.lastInteractionTimestamp = System.currentTimeMillis();
         this.turnCount = 0;
     }
@@ -322,6 +334,176 @@ public class ConversationContext {
             return idleTime > inactivityTimeoutMs;
         }
         return false;
+    }
+
+    // --- Topic Stack: Suspend & Resume ---
+
+    /**
+     * Suspends the current topic by capturing a snapshot of the active state
+     * (entities, topic-specific turns, last intent) and pushing it onto the
+     * topic stack.
+     *
+     * This method is called automatically when a TOPIC_CHANGE is detected.
+     * The user never needs to explicitly "pause" a topic.
+     *
+     * If the current topic is "unknown" or there are no entities, no snapshot
+     * is created (there's nothing meaningful to restore later).
+     */
+    public synchronized void suspendCurrentTopic() {
+        // Don't suspend empty/unknown topics
+        if ("unknown".equals(currentTopic) || recentEntities.isEmpty()) {
+            System.out.println("[ConversationContext] No meaningful topic to suspend.");
+            return;
+        }
+
+        // Collect turns that belong to the current topic
+        List<ConversationTurn> topicTurns = new ArrayList<>();
+        for (ConversationTurn turn : history) {
+            if (currentTopic.equals(turn.getTopic())) {
+                topicTurns.add(turn);
+            }
+        }
+
+        // Scope the snapshot to entities introduced in this topic's own turns,
+        // so entities from other topics don't leak into the resumed topic.
+        java.util.LinkedHashSet<Entity> topicEntities = new java.util.LinkedHashSet<>();
+        for (ConversationTurn turn : topicTurns) {
+            if (turn.getEntities() != null) {
+                topicEntities.addAll(turn.getEntities());
+            }
+        }
+        if (topicEntities.isEmpty()) {
+            topicEntities.addAll(recentEntities);
+        }
+
+        TopicState snapshot = new TopicState(
+                currentTopic,
+                new ArrayList<>(topicEntities),
+                topicTurns,
+                Instant.now(),
+                lastDetectedIntent
+        );
+
+        // If this topic is already on the stack, remove the old version
+        topicStack.removeIf(ts -> ts.matchesTopic(currentTopic));
+
+        topicStack.push(snapshot);
+
+        // Enforce stack depth limit (evict oldest)
+        while (topicStack.size() > maxStackDepth) {
+            TopicState evicted = ((ArrayDeque<TopicState>) topicStack).removeLast();
+            System.out.println("[ConversationContext] Evicted oldest suspended topic: " + evicted.getTopicId());
+        }
+
+        System.out.println("[ConversationContext] Suspended topic '" + currentTopic
+                + "' with " + snapshot.getEntities().size() + " entities and "
+                + topicTurns.size() + " turns. Stack depth: " + topicStack.size());
+
+        // Start the next topic with a clean slate so stale entities aren't
+        // picked up by pronoun resolution.
+        recentEntities.clear();
+        currentTopic = "unknown";
+    }
+
+    /**
+     * Resumes a previously suspended topic by restoring its entities and last intent.
+     *
+     * The restored entities are re-injected into recentEntities so that
+     * reference resolution can immediately bind pronouns like "it" to the
+     * correct entity from the resumed topic.
+     *
+     * @param topicId The topic identifier to resume (case-insensitive match)
+     * @return true if the topic was found and resumed, false otherwise
+     */
+    public synchronized boolean resumeTopic(String topicId) {
+        if (topicId == null) return false;
+
+        // Find and remove the topic from the stack
+        TopicState found = null;
+        Iterator<TopicState> it = topicStack.iterator();
+        while (it.hasNext()) {
+            TopicState ts = it.next();
+            if (ts.matchesTopic(topicId)) {
+                found = ts;
+                it.remove();
+                break;
+            }
+        }
+
+        if (found == null) {
+            System.out.println("[ConversationContext] No suspended topic found for: " + topicId);
+            return false;
+        }
+
+        // Suspend the current topic (if meaningful and different) before restoring
+        if (!found.matchesTopic(currentTopic)) {
+            suspendCurrentTopic();
+        }
+
+        // Restore state from snapshot
+        this.currentTopic = found.getTopicId();
+        this.lastDetectedIntent = found.getLastIntent();
+
+        // Restore entities: clear current and re-inject the suspended ones
+        this.recentEntities.clear();
+        this.recentEntities.addAll(found.getEntities());
+
+        System.out.println("[ConversationContext] Resumed topic '" + found.getTopicId()
+                + "' with " + found.getEntities().size() + " entities. Stack depth: " + topicStack.size());
+        return true;
+    }
+
+    /**
+     * Searches the topic stack for a suspended topic matching the given ID.
+     *
+     * @param topicId The topic identifier to search for
+     * @return The matching TopicState, or null if not found
+     */
+    public synchronized TopicState findSuspendedTopic(String topicId) {
+        if (topicId == null) return null;
+        for (TopicState ts : topicStack) {
+            if (ts.matchesTopic(topicId)) {
+                return ts;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns all suspended topics as an unmodifiable list (most recent first).
+     *
+     * @return List of suspended TopicState objects
+     */
+    public synchronized List<TopicState> getSuspendedTopics() {
+        return Collections.unmodifiableList(new ArrayList<>(topicStack));
+    }
+
+    /**
+     * Evicts suspended topics that have exceeded the inactivity timeout.
+     * Called during context maintenance to prevent stale topics from
+     * being restored after long periods.
+     */
+    public synchronized void clearExpiredTopics() {
+        int before = topicStack.size();
+        topicStack.removeIf(ts -> ts.isExpired(DEFAULT_SUSPENDED_TOPIC_TIMEOUT_MS));
+        int evicted = before - topicStack.size();
+        if (evicted > 0) {
+            System.out.println("[ConversationContext] Evicted " + evicted + " expired suspended topic(s).");
+        }
+    }
+
+    /**
+     * Returns the maximum stack depth for suspended topics.
+     */
+    public int getMaxStackDepth() {
+        return maxStackDepth;
+    }
+
+    /**
+     * Sets the maximum stack depth for suspended topics.
+     */
+    public synchronized void setMaxStackDepth(int maxStackDepth) {
+        this.maxStackDepth = maxStackDepth;
     }
 
     // --- Getters & Setters ---

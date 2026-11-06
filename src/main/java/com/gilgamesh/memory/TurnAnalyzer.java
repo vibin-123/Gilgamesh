@@ -3,7 +3,9 @@ package com.gilgamesh.memory;
 import com.gilgamesh.nlp.EntityExtractor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -52,6 +54,31 @@ public class TurnAnalyzer {
         Pattern.compile("(?i)\\b(?:that's|that\\s+is)\\s+it\\b")
     );
 
+    // Topic resume signal patterns — capture the target topic name
+    private static final List<Pattern> RESUME_SIGNAL_PATTERNS = List.of(
+        Pattern.compile("(?i)(?:going|go|get|let'?s?\\s+go)\\s+back\\s+to\\s+(.+)"),
+        Pattern.compile("(?i)back\\s+to\\s+(.+)"),
+        Pattern.compile("(?i)(?:return|returning)\\s+to\\s+(.+)"),
+        Pattern.compile("(?i)(?:resume|revisit|continue\\s+with)\\s+(.+)"),
+        Pattern.compile("(?i)(?:about|regarding)\\s+(.+?)\\s+again"),
+        Pattern.compile("(?i)(?:what|where|how)\\s+(?:were|was)\\s+(?:we|i)\\s+(?:saying|talking|discussing)\\s+about\\s+(.+)")
+    );
+
+    // Known topic keywords mapped to their intent-tag prefixes for matching
+    // This allows "back to Java" to match suspended topic "java_info"
+    private static final Map<String, String> TOPIC_KEYWORD_TO_PREFIX = Map.ofEntries(
+        Map.entry("java", "java"),
+        Map.entry("python", "python"),
+        Map.entry("gilgamesh", "gilgamesh"),
+        Map.entry("weather", "weather"),
+        Map.entry("time", "time"),
+        Map.entry("date", "date"),
+        Map.entry("nlp", "nlp"),
+        Map.entry("chatbot", "gilgamesh"),
+        Map.entry("creator", "tech_creator"),
+        Map.entry("advantages", "tech_advantages")
+    );
+
     public TurnAnalyzer(EntityExtractor entityExtractor) {
         this.entityExtractor = entityExtractor;
     }
@@ -81,6 +108,14 @@ public class TurnAnalyzer {
             if (pattern.matcher(inputLower).find()) {
                 return MessageType.STANDALONE;
             }
+        }
+
+        // Check for topic resumption signals BEFORE topic-change detection
+        // "back to Java" should be TOPIC_RESUME if Java is on the stack,
+        // not TOPIC_CHANGE
+        String resumeTarget = extractResumeTarget(inputLower);
+        if (resumeTarget != null && hasSuspendedTopicMatch(resumeTarget, context)) {
+            return MessageType.TOPIC_RESUME;
         }
 
         // Check for new entities that differ from current context
@@ -173,5 +208,95 @@ public class TurnAnalyzer {
      */
     private boolean containsWholeWord(String text, String word) {
         return Pattern.compile("\\b" + Pattern.quote(word) + "\\b").matcher(text).find();
+    }
+
+    /**
+     * Extracts the target topic name from a resume signal in the user input.
+     * For example, "going back to Java" extracts "java".
+     *
+     * @param inputLower The lowercase user input
+     * @return The extracted topic keyword (lowercase, trimmed), or null if no resume signal found
+     */
+    public String extractResumeTarget(String inputLower) {
+        for (Pattern pattern : RESUME_SIGNAL_PATTERNS) {
+            Matcher matcher = pattern.matcher(inputLower);
+            if (matcher.find()) {
+                String target = matcher.group(1).trim();
+                // Strip trailing punctuation and filler words
+                target = target.replaceAll("[?.!,]+$", "").trim();
+                // Strip articles and filler
+                target = target.replaceAll("^(the|a|an|our|my)\\s+", "").trim();
+                if (!target.isEmpty()) {
+                    return target.toLowerCase();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks whether a resume target keyword matches any topic on the suspended stack.
+     * Uses keyword-to-prefix mapping for fuzzy matching (e.g. "java" matches "java_info").
+     *
+     * @param resumeTarget The extracted topic keyword
+     * @param context      The conversation context with the topic stack
+     * @return true if a matching suspended topic is found
+     */
+    private boolean hasSuspendedTopicMatch(String resumeTarget, ConversationContext context) {
+        List<TopicState> suspended = context.getSuspendedTopics();
+        if (suspended.isEmpty()) return false;
+
+        for (TopicState ts : suspended) {
+            // Direct match: target equals the topic ID
+            if (ts.getTopicId().equalsIgnoreCase(resumeTarget)) {
+                return true;
+            }
+            // Prefix match: target is a keyword that maps to a topic prefix
+            String prefix = TOPIC_KEYWORD_TO_PREFIX.get(resumeTarget);
+            if (prefix != null && ts.getTopicId().toLowerCase().startsWith(prefix)) {
+                return true;
+            }
+            // Containment match: topic ID contains the target keyword
+            if (ts.getTopicId().toLowerCase().contains(resumeTarget)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Finds the topic ID from the suspended stack that best matches a resume target.
+     * Used by ConversationManager to determine which topic to resume.
+     *
+     * @param resumeTarget The extracted topic keyword
+     * @param context      The conversation context with the topic stack
+     * @return The matching topic ID, or null if not found
+     */
+    public String findMatchingSuspendedTopicId(String resumeTarget, ConversationContext context) {
+        if (resumeTarget == null) return null;
+        List<TopicState> suspended = context.getSuspendedTopics();
+
+        // Priority 1: Direct match
+        for (TopicState ts : suspended) {
+            if (ts.getTopicId().equalsIgnoreCase(resumeTarget)) {
+                return ts.getTopicId();
+            }
+        }
+        // Priority 2: Prefix match via keyword map
+        String prefix = TOPIC_KEYWORD_TO_PREFIX.get(resumeTarget);
+        if (prefix != null) {
+            for (TopicState ts : suspended) {
+                if (ts.getTopicId().toLowerCase().startsWith(prefix)) {
+                    return ts.getTopicId();
+                }
+            }
+        }
+        // Priority 3: Containment match
+        for (TopicState ts : suspended) {
+            if (ts.getTopicId().toLowerCase().contains(resumeTarget)) {
+                return ts.getTopicId();
+            }
+        }
+        return null;
     }
 }

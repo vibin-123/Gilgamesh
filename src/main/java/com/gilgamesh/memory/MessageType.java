@@ -34,5 +34,11 @@ public enum MessageType {
      * Introduction of a new entity or topic distinct from the current conversation flow.
      * Example: "Tell me about Python" (after discussing Java)
      */
-    TOPIC_CHANGE
+    TOPIC_CHANGE,
+
+    /**
+     * User explicitly returns to a previously suspended conversation topic.
+     * Example: "Going back to Java" (after discussing Python, with Java suspended on the stack)
+     */
+    TOPIC_RESUME
 }

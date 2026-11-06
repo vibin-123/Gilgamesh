@@ -59,31 +59,52 @@ public class ConversationManager {
         // Step 1: Extract entities from the raw user input
         List<Entity> extractedEntities = entityExtractor.extractEntities(userInput);
 
-        // Step 2: Analyze the message type (standalone, follow-up, context-dependent, topic-change)
+        // Step 2: Analyze the message type (standalone, follow-up, context-dependent, topic-change, topic-resume)
         MessageType messageType = turnAnalyzer.analyze(userInput, context);
         System.out.println("[ConversationManager] Message type: " + messageType);
 
-        // Step 3: Resolve references using conversation context
-        // Only perform reference resolution for follow-up and context-dependent messages
+        // Step 3: Handle topic lifecycle events
+        if (messageType == MessageType.TOPIC_CHANGE) {
+            // Auto-suspend the current topic before switching
+            context.suspendCurrentTopic();
+            // Also evict any expired topics from the stack
+            context.clearExpiredTopics();
+        } else if (messageType == MessageType.TOPIC_RESUME) {
+            // Identify which suspended topic the user wants to resume
+            String resumeTarget = turnAnalyzer.extractResumeTarget(userInput.toLowerCase().trim());
+            String topicId = turnAnalyzer.findMatchingSuspendedTopicId(resumeTarget, context);
+            if (topicId != null) {
+                context.resumeTopic(topicId);
+                System.out.println("[ConversationManager] Resumed topic: " + topicId);
+            } else {
+                System.out.println("[ConversationManager] Resume target not found, treating as standalone.");
+                messageType = MessageType.STANDALONE;
+            }
+        }
+
+        // Step 4: Resolve references using conversation context
+        // Only perform reference resolution for follow-up, context-dependent, and resumed messages
         String resolvedInput = userInput;
-        if (messageType == MessageType.FOLLOW_UP || messageType == MessageType.CONTEXT_DEPENDENT) {
+        if (messageType == MessageType.FOLLOW_UP || messageType == MessageType.CONTEXT_DEPENDENT
+                || messageType == MessageType.TOPIC_RESUME) {
             resolvedInput = referenceResolver.resolveReferences(userInput, context);
         }
 
-        // Step 4: Intent classification on the resolved input
-        // Only apply contextual topic boost for follow-up and context-dependent messages;
+        // Step 5: Intent classification on the resolved input
+        // Only apply contextual topic boost for follow-up, context-dependent, and resumed messages;
         // standalone and topic-changing messages are evaluated cleanly without prior topic bias.
         Intent matchedIntent;
-        if (messageType == MessageType.FOLLOW_UP || messageType == MessageType.CONTEXT_DEPENDENT) {
+        if (messageType == MessageType.FOLLOW_UP || messageType == MessageType.CONTEXT_DEPENDENT
+                || messageType == MessageType.TOPIC_RESUME) {
             matchedIntent = classifier.classify(resolvedInput, context);
         } else {
             matchedIntent = classifier.classify(resolvedInput, null);
         }
 
-        // Step 5: Response generation
+        // Step 6: Response generation
         String response = responseEngine.generateResponse(matchedIntent, context);
 
-        // Step 6: Update conversation context with entities and turn info
+        // Step 7: Update conversation context with entities and turn info
         context.update(userInput, response, matchedIntent, extractedEntities);
 
         return response;
