@@ -55,20 +55,34 @@ public class SpellChecker {
         String bestMatch = lower;
         int minDistance = Integer.MAX_VALUE;
 
+        // Short words must be (nearly) exact: a distance of 2 on a 5-letter word
+        // rewrites most of it and turns gibberish into unrelated vocabulary words.
+        int maxDistance = maxEditDistanceFor(lower.length());
+        if (maxDistance == 0) {
+            return lower;
+        }
+
         for (String vocabWord : vocabulary) {
-            // Quick optimization: length difference must not exceed MAX_EDIT_DISTANCE
-            if (Math.abs(vocabWord.length() - lower.length()) > MAX_EDIT_DISTANCE) {
+            // Quick optimization: length difference must not exceed the allowed distance
+            if (Math.abs(vocabWord.length() - lower.length()) > maxDistance) {
                 continue;
             }
 
             int dist = computeLevenshteinDistance(lower, vocabWord);
-            if (dist <= MAX_EDIT_DISTANCE && dist < minDistance) {
+            if (dist <= maxDistance && dist < minDistance) {
                 minDistance = dist;
                 bestMatch = vocabWord;
             }
         }
 
         return bestMatch;
+    }
+
+    /** Allowed edit distance by word length: 3-4 letters -> 0, 5-7 -> 1, 8+ -> MAX_EDIT_DISTANCE. */
+    private static int maxEditDistanceFor(int length) {
+        if (length <= 4) return 0;
+        if (length <= 7) return 1;
+        return MAX_EDIT_DISTANCE;
     }
 
     /**

@@ -31,7 +31,8 @@ public class MultiTurnConversationTest {
         IntentClassifier classifier = new IntentClassifier(repository, preprocessor);
         List<IntentHandler> handlers = List.of(
                 new DateTimeIntentHandler(),
-                new WeatherIntentHandler(),
+                new WeatherIntentHandler(city ->
+                        new com.gilgamesh.response.WeatherClient.Report(city, "Testland", 20.0, 10.0, 0)),
                 new StaticIntentHandler());
         ResponseEngine responseEngine = new ResponseEngine(handlers);
         context = new ConversationContext();

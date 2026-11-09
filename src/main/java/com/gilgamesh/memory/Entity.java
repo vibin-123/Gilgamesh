@@ -20,6 +20,7 @@ public class Entity {
         PERSON,     // People: James Gosling, Guido van Rossum, etc.
         BOT,        // Bot references: Gilgamesh
         CONCEPT,    // Technical concepts: NLP, tokenization, etc.
+        LOCATION,   // Places: Paris, New York, etc.
         GENERAL     // Unclassified entities
     }
 

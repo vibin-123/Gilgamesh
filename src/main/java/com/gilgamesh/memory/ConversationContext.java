@@ -1,5 +1,7 @@
 package com.gilgamesh.memory;
 
+import java.util.logging.Logger;
+
 import com.gilgamesh.model.Intent;
 import java.time.Instant;
 import java.util.ArrayDeque;
@@ -30,6 +32,8 @@ import java.util.List;
  * The implementation is thread-safe.
  */
 public class ConversationContext {
+
+    private static final Logger LOG = Logger.getLogger(ConversationContext.class.getName());
 
     // Default Configuration
     public static final int DEFAULT_MAX_HISTORY_SIZE = 10;
@@ -137,7 +141,7 @@ public class ConversationContext {
         this.lastInteractionTimestamp = System.currentTimeMillis();
         this.turnCount++;
 
-        System.out.println("[ConversationContext] Context updated. Turn: " + turnCount + "/" 
+        LOG.fine("[ConversationContext] Context updated. Turn: " + turnCount + "/" 
                 + (maxSessionTurns > 0 ? maxSessionTurns : "∞") 
                 + ", Topic: " + currentTopic + ", History Size: " + history.size()
                 + ", Entities: " + recentEntities.size());
@@ -286,7 +290,7 @@ public class ConversationContext {
      */
     public synchronized boolean clearExpiredContext() {
         if (isExpired()) {
-            System.out.println("[ConversationContext] Context expired due to " 
+            LOG.fine("[ConversationContext] Context expired due to " 
                     + (isTurnLimitExpired() ? "turn limit." : "inactivity."));
             reset();
             return true;
@@ -299,7 +303,72 @@ public class ConversationContext {
      */
     public synchronized void reset() {
         resetState();
-        System.out.println("[ConversationContext] Memory cleared.");
+        LOG.fine("[ConversationContext] Memory cleared.");
+    }
+
+    // --- Persistence: snapshot & restore ---
+
+    /**
+     * Captures the current conversation state as a plain-data snapshot for saving.
+     */
+    public synchronized SessionSnapshot snapshot() {
+        clearExpiredContext();
+        SessionSnapshot snapshot = new SessionSnapshot();
+        snapshot.savedAtMillis = System.currentTimeMillis();
+        snapshot.currentTopic = currentTopic;
+        snapshot.lastUserMessage = lastUserMessage;
+        snapshot.lastBotResponse = lastBotResponse;
+        snapshot.lastIntentTag = lastDetectedIntent != null ? lastDetectedIntent.getTag() : null;
+        snapshot.recentEntities = SessionSnapshot.entitiesToDtos(recentEntities);
+        for (ConversationTurn turn : history) {
+            snapshot.history.add(SessionSnapshot.TurnDto.from(turn));
+        }
+        for (TopicState topic : topicStack) { // iteration order is most recent first
+            snapshot.topicStack.add(SessionSnapshot.TopicDto.from(topic));
+        }
+        return snapshot;
+    }
+
+    /**
+     * Replaces the current state with a previously saved snapshot.
+     *
+     * The inactivity clock restarts from now, and the session turn counter restarts
+     * from the restored history size, so a restored session isn't expired immediately.
+     *
+     * @param snapshot     The saved state
+     * @param intentLookup Resolves an intent tag back to its Intent (unknown tags become null)
+     */
+    public synchronized void restore(SessionSnapshot snapshot, java.util.function.Function<String, Intent> intentLookup) {
+        if (snapshot == null) return;
+        resetState();
+
+        this.currentTopic = snapshot.currentTopic != null ? snapshot.currentTopic : "unknown";
+        this.lastUserMessage = snapshot.lastUserMessage;
+        this.lastBotResponse = snapshot.lastBotResponse;
+        this.lastDetectedIntent = SessionSnapshot.lookup(intentLookup, snapshot.lastIntentTag);
+        this.recentEntities.addAll(SessionSnapshot.dtosToEntities(snapshot.recentEntities));
+
+        if (snapshot.history != null) {
+            for (SessionSnapshot.TurnDto turn : snapshot.history) {
+                this.history.add(turn.toTurn(intentLookup));
+            }
+        }
+        while (this.history.size() > maxHistorySize) {
+            this.history.remove(0);
+        }
+        if (snapshot.topicStack != null) {
+            for (SessionSnapshot.TopicDto topic : snapshot.topicStack) {
+                this.topicStack.addLast(topic.toTopicState(intentLookup));
+            }
+        }
+        while (this.topicStack.size() > maxStackDepth) {
+            this.topicStack.removeLast();
+        }
+
+        this.turnCount = history.size();
+        this.lastInteractionTimestamp = System.currentTimeMillis();
+        LOG.fine("[ConversationContext] Restored session: " + history.size() + " turns, topic '"
+                + currentTopic + "', " + topicStack.size() + " suspended topic(s).");
     }
 
     private void resetState() {
@@ -352,7 +421,7 @@ public class ConversationContext {
     public synchronized void suspendCurrentTopic() {
         // Don't suspend empty/unknown topics
         if ("unknown".equals(currentTopic) || recentEntities.isEmpty()) {
-            System.out.println("[ConversationContext] No meaningful topic to suspend.");
+            LOG.fine("[ConversationContext] No meaningful topic to suspend.");
             return;
         }
 
@@ -392,10 +461,10 @@ public class ConversationContext {
         // Enforce stack depth limit (evict oldest)
         while (topicStack.size() > maxStackDepth) {
             TopicState evicted = ((ArrayDeque<TopicState>) topicStack).removeLast();
-            System.out.println("[ConversationContext] Evicted oldest suspended topic: " + evicted.getTopicId());
+            LOG.fine("[ConversationContext] Evicted oldest suspended topic: " + evicted.getTopicId());
         }
 
-        System.out.println("[ConversationContext] Suspended topic '" + currentTopic
+        LOG.fine("[ConversationContext] Suspended topic '" + currentTopic
                 + "' with " + snapshot.getEntities().size() + " entities and "
                 + topicTurns.size() + " turns. Stack depth: " + topicStack.size());
 
@@ -431,7 +500,7 @@ public class ConversationContext {
         }
 
         if (found == null) {
-            System.out.println("[ConversationContext] No suspended topic found for: " + topicId);
+            LOG.fine("[ConversationContext] No suspended topic found for: " + topicId);
             return false;
         }
 
@@ -448,7 +517,7 @@ public class ConversationContext {
         this.recentEntities.clear();
         this.recentEntities.addAll(found.getEntities());
 
-        System.out.println("[ConversationContext] Resumed topic '" + found.getTopicId()
+        LOG.fine("[ConversationContext] Resumed topic '" + found.getTopicId()
                 + "' with " + found.getEntities().size() + " entities. Stack depth: " + topicStack.size());
         return true;
     }
@@ -488,7 +557,7 @@ public class ConversationContext {
         topicStack.removeIf(ts -> ts.isExpired(DEFAULT_SUSPENDED_TOPIC_TIMEOUT_MS));
         int evicted = before - topicStack.size();
         if (evicted > 0) {
-            System.out.println("[ConversationContext] Evicted " + evicted + " expired suspended topic(s).");
+            LOG.fine("[ConversationContext] Evicted " + evicted + " expired suspended topic(s).");
         }
     }
 

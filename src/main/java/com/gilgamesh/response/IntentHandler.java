@@ -1,5 +1,6 @@
 package com.gilgamesh.response;
 
+import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.model.Intent;
 
 /**
@@ -19,4 +20,17 @@ public interface IntentHandler {
      * @return The response string
      */
     String handle(Intent intent);
+
+    /**
+     * Generates a response with access to the user's message and conversation context.
+     * Handlers that need the user's text (e.g. a city for weather) override this;
+     * by default it delegates to {@link #handle(Intent)}.
+     *
+     * @param intent    The matched intent
+     * @param userInput The (reference-resolved) user message
+     * @param context   Active conversation context (may be null)
+     */
+    default String handle(Intent intent, String userInput, ConversationContext context) {
+        return handle(intent);
+    }
 }

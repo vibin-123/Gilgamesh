@@ -1,5 +1,7 @@
 package com.gilgamesh.nlp;
 
+import java.util.logging.Logger;
+
 import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.memory.Entity;
 import com.gilgamesh.memory.Entity.EntityType;
@@ -35,6 +37,8 @@ import java.util.regex.Pattern;
  *   - Resolution is independent from intent classification
  */
 public class ReferenceResolver {
+
+    private static final Logger LOG = Logger.getLogger(ReferenceResolver.class.getName());
 
     // Pronoun patterns
     private static final Pattern POSSESSIVE_PHRASE_PATTERN = Pattern.compile(
@@ -133,7 +137,7 @@ public class ReferenceResolver {
         resolved = resolvePluralPronouns(resolved, context);
 
         if (!resolved.equals(userInput)) {
-            System.out.println("[ReferenceResolver] Resolved anaphora: '" + userInput + "' -> '" + resolved + "'");
+            LOG.fine("[ReferenceResolver] Resolved anaphora: '" + userInput + "' -> '" + resolved + "'");
         }
 
         return resolved;

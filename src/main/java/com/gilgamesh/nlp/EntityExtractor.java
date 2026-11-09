@@ -1,5 +1,7 @@
 package com.gilgamesh.nlp;
 
+import java.util.logging.Logger;
+
 import com.gilgamesh.memory.Entity;
 import com.gilgamesh.memory.Entity.EntityType;
 import com.gilgamesh.memory.Entity.GrammaticalNumber;
@@ -22,6 +24,8 @@ import java.util.regex.Pattern;
  * This is a lightweight, deterministic approach that avoids external APIs or ML models.
  */
 public class EntityExtractor {
+
+    private static final Logger LOG = Logger.getLogger(EntityExtractor.class.getName());
 
     // Known entity catalogs — maps lowercase entity name to its type
     private static final Map<String, EntityType> KNOWN_ENTITIES = new LinkedHashMap<>();
@@ -126,6 +130,13 @@ public class EntityExtractor {
 
         Set<String> foundEntityNames = new HashSet<>();
 
+        // Strategy 0: Location in a weather-style query ("weather in Paris").
+        // Added first so Strategy 2 below doesn't swallow the whole phrase as a GENERAL entity.
+        extractLocation(userInput).ifPresent(location -> {
+            entities.add(location);
+            foundEntityNames.add(location.getName().toLowerCase());
+        });
+
         for (String entityName : sortedNames) {
             if (containsWholeWord(inputLower, entityName)) {
                 String canonicalName = getCanonicalName(entityName);
@@ -160,10 +171,61 @@ public class EntityExtractor {
         }
 
         if (!entities.isEmpty()) {
-            System.out.println("[EntityExtractor] Extracted entities: " + entities);
+            LOG.fine("[EntityExtractor] Extracted entities: " + entities);
         }
 
         return entities;
+    }
+
+    // "... weather/forecast/temperature ... in|for|at <City> [today|?|...]"
+    private static final Pattern WEATHER_LOCATION_PATTERN = Pattern.compile(
+            "(?i)\\b(?:weather|forecast|temperature|raining|snowing)\\b.*?\\b(?:in|for|at)\\s+"
+                    + "([A-Za-z][A-Za-z .'-]*?)(?=\\s+(?:today|tonight|tomorrow|now|right now|currently|please)\\b|[?.!,]|$)");
+    // Bare follow-up: "and in London?", "in Tokyo"
+    private static final Pattern FOLLOW_UP_LOCATION_PATTERN = Pattern.compile(
+            "(?i)^(?:and\\s+|what about\\s+|how about\\s+)?(?:in|for|at)\\s+([A-Za-z][A-Za-z .'-]*?)\\s*[?.!]*$");
+    private static final Set<String> NOT_A_PLACE = Set.of(
+            "the", "a", "an", "it", "this", "that", "here", "there", "general", "my area", "my city",
+            "my location", "the world", "me", "us", "you", "java", "python");
+
+    /**
+     * Extracts a city/place from a weather-style query or a bare "in London?" follow-up.
+     *
+     * @return the LOCATION entity, or empty if none found
+     */
+    public Optional<Entity> extractLocation(String userInput) {
+        if (userInput == null || userInput.isBlank()) {
+            return Optional.empty();
+        }
+        String text = userInput.trim();
+        Matcher matcher = WEATHER_LOCATION_PATTERN.matcher(text);
+        if (!matcher.find()) {
+            matcher = FOLLOW_UP_LOCATION_PATTERN.matcher(text);
+            if (!matcher.find()) {
+                return Optional.empty();
+            }
+        }
+        return toLocation(matcher.group(1));
+    }
+
+    /**
+     * Normalizes raw text as a LOCATION entity ("new york" -> "New York"),
+     * or empty if the text is blank or not plausibly a place.
+     */
+    public Optional<Entity> toLocation(String rawPlace) {
+        if (rawPlace == null) {
+            return Optional.empty();
+        }
+        String place = rawPlace.trim().replaceAll("[?.!,]+$", "").trim();
+        if (place.length() < 2 || NOT_A_PLACE.contains(place.toLowerCase())) {
+            return Optional.empty();
+        }
+        StringBuilder name = new StringBuilder();
+        for (String word : place.split("\\s+")) {
+            if (name.length() > 0) name.append(' ');
+            name.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase());
+        }
+        return Optional.of(new Entity(name.toString(), EntityType.LOCATION));
     }
 
     /**
@@ -206,8 +268,14 @@ public class EntityExtractor {
             // Short names like "NLP", "AI", "SQL" stay uppercase
             return rawName.toUpperCase();
         }
-        // Return the raw name with first letter capitalized
-        return rawName.substring(0, 1).toUpperCase() + rawName.substring(1);
+        // Capitalize the first letter of every word ("james gosling" -> "James Gosling")
+        StringBuilder name = new StringBuilder();
+        for (String word : rawName.split("\\s+")) {
+            if (word.isEmpty()) continue;
+            if (name.length() > 0) name.append(' ');
+            name.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return name.toString();
     }
 
     /**

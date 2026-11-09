@@ -1,9 +1,12 @@
 package com.gilgamesh.nlp;
 
+import java.util.logging.Logger;
+
 import com.gilgamesh.data.IntentRepository;
 import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.model.Intent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,10 +24,15 @@ import java.util.Set;
  */
 public class IntentClassifier {
 
+    private static final Logger LOG = Logger.getLogger(IntentClassifier.class.getName());
+
     private final IntentRepository repository;
     private final TextPreprocessor preprocessor;
     private final TfidfVectorizer tfidfVectorizer;
-    private final Map<String, Map<String, Double>> patternTfidfVectors = new HashMap<>();
+    /** Precomputed per-pattern data (token set + TF-IDF vector), keyed by intent. */
+    private record PatternData(Set<String> tokens, Map<String, Double> vector) {}
+
+    private final Map<Intent, List<PatternData>> patternCache = new HashMap<>();
 
     private static final double CONFIDENCE_THRESHOLD = 0.15;
     private static final double CONTEXT_BOOST_MULTIPLIER = 1.25;
@@ -57,13 +65,16 @@ public class IntentClassifier {
             // 2. Train TF-IDF vectorizer on intent corpus patterns
             tfidfVectorizer.fit(repository.getIntents(), preprocessor);
 
-            // 3. Precompute TF-IDF vectors for all pattern documents
+            // 3. Precompute token sets and TF-IDF vectors for all patterns once,
+            // so classify() never has to re-preprocess them.
             for (Intent intent : repository.getIntents()) {
+                List<PatternData> data = new ArrayList<>();
                 for (String pattern : intent.getPatterns()) {
                     List<String> tokens = preprocessor.preprocess(pattern);
-                    Map<String, Double> vec = tfidfVectorizer.transform(tokens);
-                    patternTfidfVectors.put(pattern, vec);
+                    if (tokens.isEmpty()) continue;
+                    data.add(new PatternData(new HashSet<>(tokens), tfidfVectorizer.transform(tokens)));
                 }
+                patternCache.put(intent, data);
             }
         }
     }
@@ -89,18 +100,12 @@ public class IntentClassifier {
         for (Intent intent : repository.getIntents()) {
             double maxPatternScoreForIntent = 0.0;
 
-            for (String pattern : intent.getPatterns()) {
-                List<String> patternTokens = preprocessor.preprocess(pattern);
-                if (patternTokens.isEmpty()) continue;
-
-                Set<String> patternTokenSet = new HashSet<>(patternTokens);
-
+            for (PatternData pattern : patternCache.getOrDefault(intent, List.of())) {
                 // Score 1: Jaccard similarity
-                double jaccard = jaccardSimilarity(userTokenSet, patternTokenSet);
+                double jaccard = jaccardSimilarity(userTokenSet, pattern.tokens());
 
                 // Score 2: TF-IDF Cosine similarity
-                Map<String, Double> patternVec = patternTfidfVectors.getOrDefault(pattern, Map.of());
-                double cosine = tfidfVectorizer.computeCosineSimilarity(userTfidfVec, patternVec);
+                double cosine = tfidfVectorizer.computeCosineSimilarity(userTfidfVec, pattern.vector());
 
                 // Ensemble hybrid score (0.4 * Jaccard + 0.6 * Cosine)
                 double rawHybridScore = (0.4 * jaccard) + (0.6 * cosine);
@@ -124,12 +129,12 @@ public class IntentClassifier {
         }
 
         if (bestScore < CONFIDENCE_THRESHOLD) {
-            System.out.println("[IntentClassifier] Best hybrid score " + String.format("%.3f", bestScore)
+            LOG.fine("[IntentClassifier] Best hybrid score " + String.format("%.3f", bestScore)
                     + " is below threshold " + CONFIDENCE_THRESHOLD + " — fallback.");
             return null;
         }
 
-        System.out.println("[IntentClassifier] Matched intent '" + bestIntent.getTag()
+        LOG.fine("[IntentClassifier] Matched intent '" + bestIntent.getTag()
                 + "' with hybrid score " + String.format("%.3f", bestScore));
 
         return bestIntent;

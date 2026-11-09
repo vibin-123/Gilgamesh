@@ -1,0 +1,10 @@
+# Build output
+target/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Maven wrapper jar is downloaded on demand
+.mvn/wrapper/maven-wrapper.jar

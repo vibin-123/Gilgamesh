@@ -1,5 +1,7 @@
 package com.gilgamesh.data;
 
+import java.util.logging.Logger;
+
 import com.gilgamesh.model.Intent;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -30,6 +32,8 @@ import java.util.List;
  */
 public class IntentRepository {
 
+    private static final Logger LOG = Logger.getLogger(IntentRepository.class.getName());
+
     private static final String INTENTS_FILE = "/intents.json";
 
     private final List<Intent> intents;
@@ -51,15 +55,24 @@ public class IntentRepository {
      * @throws RuntimeException if the file is missing or contains invalid JSON
      */
     public IntentRepository() {
-        this.intents = loadIntents();
+        this(INTENTS_FILE);
     }
 
-    private List<Intent> loadIntents() {
+    /**
+     * Loads intents from a custom classpath resource (used by tests).
+     *
+     * @param resourcePath classpath resource path, e.g. "/intents.json"
+     */
+    public IntentRepository(String resourcePath) {
+        this.intents = loadIntents(resourcePath);
+    }
+
+    private List<Intent> loadIntents(String resourcePath) {
         // Load the JSON file from the classpath (src/main/resources/)
-        InputStream stream = getClass().getResourceAsStream(INTENTS_FILE);
+        InputStream stream = getClass().getResourceAsStream(resourcePath);
         if (stream == null) {
             throw new RuntimeException(
-                    "Could not find " + INTENTS_FILE + " on the classpath. "
+                    "Could not find " + resourcePath + " on the classpath. "
                     + "Ensure it exists in src/main/resources/."
             );
         }
@@ -74,7 +87,7 @@ public class IntentRepository {
                 );
             }
 
-            System.out.println("[IntentRepository] Loaded " + data.intents.size() + " intents: "
+            LOG.fine("[IntentRepository] Loaded " + data.intents.size() + " intents: "
                     + data.intents.stream()
                             .map(Intent::getTag)
                             .toList());
@@ -95,5 +108,20 @@ public class IntentRepository {
      */
     public List<Intent> getIntents() {
         return intents;
+    }
+
+    /**
+     * Looks up an intent by tag.
+     *
+     * @return the intent, or null if no intent has that tag
+     */
+    public Intent findByTag(String tag) {
+        if (tag == null) return null;
+        for (Intent intent : intents) {
+            if (tag.equals(intent.getTag())) {
+                return intent;
+            }
+        }
+        return null;
     }
 }

@@ -40,7 +40,8 @@ public class TextPreprocessor {
             "have", "has", "had", "do", "does", "did",
             "will", "would", "shall", "should", "may", "might", "must",
             "can", "could",
-            "not", "no", "this", "that", "these", "those",
+            // Negations ("no", "not") are intentionally kept: they flip meaning
+            "this", "that", "these", "those",
             "if", "then", "than", "too", "very", "just",
             "there", "here", "all", "any", "each", "some",
             "s", "t", "re", "ve", "ll", "d", "m"

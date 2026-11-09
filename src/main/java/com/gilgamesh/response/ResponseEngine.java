@@ -28,6 +28,17 @@ public class ResponseEngine {
      * @return A response string to display to user
      */
     public String generateResponse(Intent intent, ConversationContext context) {
+        return generateResponse(intent, null, context);
+    }
+
+    /**
+     * Generates a response, passing the user's message through to handlers that need it.
+     *
+     * @param intent    The matched intent (or null if fallback)
+     * @param userInput The (reference-resolved) user message, may be null
+     * @param context   Active conversation context
+     */
+    public String generateResponse(Intent intent, String userInput, ConversationContext context) {
         if (intent == null) {
             return fallbackHandler.generateFallbackResponse(context);
         }
@@ -44,7 +55,7 @@ public class ResponseEngine {
                         return selected;
                     }
                 }
-                String resp = handler.handle(intent);
+                String resp = handler.handle(intent, userInput, context);
                 return templateProcessor.interpolateVariables(resp, context);
             }
         }
