@@ -63,7 +63,7 @@ public class MultiTurnConversationTest {
         String response1 = manager.processMessage("What is Java?");
         assertNotNull(response1);
         assertFalse(response1.isBlank());
-        assertEquals("about_technology", context.getLastDetectedIntent().getTag(), "Turn 1 should match about_technology");
+        assertEquals("about_java", context.getLastDetectedIntent().getTag(), "Turn 1 should match about_java");
 
         // Turn 2: Follow-up pronoun "it" -> should resolve to "Who created Java?"
         String response2 = manager.processMessage("Who created it?");
@@ -126,6 +126,18 @@ public class MultiTurnConversationTest {
         // After 2 turns, context should expire upon the next action
         assertTrue(context.clearExpiredContext());
         assertEquals(0, context.getTurnCount());
+    }
+
+    @Test
+    public void testLongConversationKeepsContextByDefault() {
+        manager.processMessage("What is Java?");
+        for (int i = 0; i < 24; i++) {
+            manager.processMessage("hello");
+        }
+        assertEquals(25, context.getTurnCount(), "No turn limit by default");
+
+        String response = manager.processMessage("Who created it?");
+        assertTrue(response.toLowerCase().contains("gosling"), "'it' should still resolve to Java after 25 turns");
     }
 
     @Test

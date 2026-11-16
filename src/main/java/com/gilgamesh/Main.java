@@ -9,6 +9,7 @@ import com.gilgamesh.nlp.TextPreprocessor;
 import com.gilgamesh.response.DateTimeIntentHandler;
 import com.gilgamesh.response.IntentHandler;
 import com.gilgamesh.response.OpenMeteoWeatherClient;
+import com.gilgamesh.response.RepeatIntentHandler;
 import com.gilgamesh.response.ResponseEngine;
 import com.gilgamesh.response.StaticIntentHandler;
 import com.gilgamesh.response.WeatherIntentHandler;
@@ -124,6 +125,7 @@ public class Main {
         List<IntentHandler> handlers = List.of(
                 new DateTimeIntentHandler(),
                 new WeatherIntentHandler(new OpenMeteoWeatherClient()),
+                new RepeatIntentHandler(),
                 new StaticIntentHandler());
         ResponseEngine responseEngine = new ResponseEngine(handlers);
 

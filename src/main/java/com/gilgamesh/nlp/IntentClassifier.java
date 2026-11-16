@@ -26,6 +26,13 @@ public class IntentClassifier {
 
     private static final Logger LOG = Logger.getLogger(IntentClassifier.class.getName());
 
+    /**
+     * Chosen from the threshold sweep printed by ClassifierEvaluationTest: below 0.40 the bot
+     * answers most out-of-scope questions with a wrong intent; above it, in-scope accuracy drops fast.
+     */
+    public static final double DEFAULT_CONFIDENCE_THRESHOLD = 0.40;
+    private static final double CONTEXT_BOOST_MULTIPLIER = 1.25;
+
     private final IntentRepository repository;
     private final TextPreprocessor preprocessor;
     private final TfidfVectorizer tfidfVectorizer;
@@ -33,9 +40,7 @@ public class IntentClassifier {
     private record PatternData(Set<String> tokens, Map<String, Double> vector) {}
 
     private final Map<Intent, List<PatternData>> patternCache = new HashMap<>();
-
-    private static final double CONFIDENCE_THRESHOLD = 0.15;
-    private static final double CONTEXT_BOOST_MULTIPLIER = 1.25;
+    private double confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD;
 
     public IntentClassifier(IntentRepository repository, TextPreprocessor preprocessor) {
         this.repository = repository;
@@ -81,12 +86,26 @@ public class IntentClassifier {
 
     /**
      * Classifies raw input text with context awareness.
+     *
+     * @return the matched intent, or null if nothing scored above the confidence threshold
      */
     public Intent classify(String userInput, ConversationContext context) {
+        return classifyDetailed(userInput, context).intent();
+    }
+
+    public Intent classify(String userInput) {
+        return classify(userInput, null);
+    }
+
+    /**
+     * Classifies raw input and returns the full evidence: best intent, its score,
+     * and the runner-up. Use {@link Classification#intent()} for the final decision.
+     */
+    public Classification classifyDetailed(String userInput, ConversationContext context) {
         List<String> userTokens = preprocessor.preprocess(userInput);
 
         if (userTokens.isEmpty()) {
-            return null;
+            return Classification.none(confidenceThreshold);
         }
 
         Set<String> userTokenSet = new HashSet<>(userTokens);
@@ -94,6 +113,8 @@ public class IntentClassifier {
 
         Intent bestIntent = null;
         double bestScore = 0.0;
+        Intent secondIntent = null;
+        double secondScore = 0.0;
 
         String currentTopic = (context != null) ? context.getCurrentTopic() : null;
 
@@ -123,35 +144,60 @@ public class IntentClassifier {
             }
 
             if (finalScore > bestScore) {
+                secondScore = bestScore;
+                secondIntent = bestIntent;
                 bestScore = finalScore;
                 bestIntent = intent;
+            } else if (finalScore > secondScore) {
+                secondScore = finalScore;
+                secondIntent = intent;
             }
         }
 
-        if (bestScore < CONFIDENCE_THRESHOLD) {
+        Classification result = new Classification(bestIntent, bestScore, secondIntent, secondScore, confidenceThreshold);
+
+        if (!result.isMatch()) {
             LOG.fine("[IntentClassifier] Best hybrid score " + String.format("%.3f", bestScore)
-                    + " is below threshold " + CONFIDENCE_THRESHOLD + " — fallback.");
-            return null;
+                    + " is below threshold " + confidenceThreshold + " — fallback.");
+        } else {
+            LOG.fine("[IntentClassifier] Matched intent '" + bestIntent.getTag()
+                    + "' with hybrid score " + String.format("%.3f", bestScore)
+                    + (secondIntent != null ? " (runner-up '" + secondIntent.getTag() + "' "
+                            + String.format("%.3f", secondScore) + ")" : ""));
         }
 
-        LOG.fine("[IntentClassifier] Matched intent '" + bestIntent.getTag()
-                + "' with hybrid score " + String.format("%.3f", bestScore));
-
-        return bestIntent;
+        return result;
     }
 
-    public Intent classify(String userInput) {
-        return classify(userInput, null);
+    public double getConfidenceThreshold() {
+        return confidenceThreshold;
     }
 
+    public void setConfidenceThreshold(double confidenceThreshold) {
+        this.confidenceThreshold = confidenceThreshold;
+    }
+
+    /**
+     * IDF-weighted Jaccard similarity: shared words divided by all words, where each
+     * word counts by its rarity instead of counting 1. Sharing a common word such as
+     * "what" or "you" is weak evidence; sharing "weather" is strong evidence; and a
+     * word the bot has never seen ("capital", "France") counts heavily against a match.
+     */
     private double jaccardSimilarity(Set<String> setA, Set<String> setB) {
-        Set<String> intersection = new HashSet<>(setA);
-        intersection.retainAll(setB);
-
-        Set<String> union = new HashSet<>(setA);
-        union.addAll(setB);
-
-        if (union.isEmpty()) return 0.0;
-        return (double) intersection.size() / union.size();
+        double shared = 0.0;
+        double total = 0.0;
+        for (String token : setA) {
+            double weight = tfidfVectorizer.idf(token);
+            total += weight;
+            if (setB.contains(token)) {
+                shared += weight;
+            }
+        }
+        for (String token : setB) {
+            if (!setA.contains(token)) {
+                total += tfidfVectorizer.idf(token);
+            }
+        }
+        return total == 0.0 ? 0.0 : shared / total;
     }
 }

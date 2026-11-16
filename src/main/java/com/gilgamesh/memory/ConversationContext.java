@@ -37,7 +37,8 @@ public class ConversationContext {
 
     // Default Configuration
     public static final int DEFAULT_MAX_HISTORY_SIZE = 10;
-    public static final int DEFAULT_MAX_SESSION_TURNS = 20;
+    /** 0 = no turn limit. History is already a sliding window, so a hard wipe after N turns only loses context. */
+    public static final int DEFAULT_MAX_SESSION_TURNS = 0;
     public static final long DEFAULT_INACTIVITY_TIMEOUT_MS = 300_000; // 5 minutes
     private static final int DEFAULT_MAX_ENTITIES = 20;
     private static final int DEFAULT_MAX_STACK_DEPTH = 5;

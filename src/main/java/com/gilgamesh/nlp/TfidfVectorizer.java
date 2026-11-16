@@ -117,5 +117,14 @@ public class TfidfVectorizer {
         return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
+    /**
+     * Returns the IDF weight of a token. Tokens never seen in the intent patterns get
+     * the maximum weight: an unknown word is strong evidence the message is about
+     * something the bot was not taught.
+     */
+    public double idf(String token) {
+        return idfMap.getOrDefault(token, Math.log((double) (totalDocuments + 1) / 1) + 1.0);
+    }
+
     public Set<String> getVocabulary() { return vocabulary; }
 }

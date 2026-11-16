@@ -317,7 +317,6 @@ public class ReferenceResolver {
                     return "weather";
                 case "datetime":
                     return "time";
-                case "about_technology":
                 case "about_java":
                 case "java_info":
                     return "Java";

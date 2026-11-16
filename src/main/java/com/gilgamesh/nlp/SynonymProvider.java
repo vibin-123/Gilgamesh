@@ -45,7 +45,8 @@ public class SynonymProvider {
         addSynonyms("help", "assist", "assistance", "support", "guidance");
         
         // Jokes & Humor
-        addSynonyms("joke", "funny", "humor", "gag", "pun");
+        // "funny" is deliberately not a synonym of "joke": "that's funny" is a reaction, not a request
+        addSynonyms("joke", "humor", "gag", "pun");
         
         // Capabilities / Features
         addSynonyms("feature", "capability", "functionality", "ability");

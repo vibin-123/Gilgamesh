@@ -12,8 +12,8 @@
     <name>Gilgamesh NLP Chatbot</name>
     <description>
         A Java-based NLP chatbot that demonstrates core natural language processing
-        concepts — tokenization, stopword removal, and intent classification via
-        token-overlap scoring — without relying on external APIs.
+        concepts — tokenization, spell correction, stemming, TF-IDF intent classification,
+        entity extraction, and multi-turn conversation memory — without an AI service.
     </description>
 
     <properties>
@@ -44,6 +44,17 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.11.0</version>
+        </dependency>
+
+        <!--
+            OpenNLP logs through SLF4J. This no-op binding silences the
+            "No SLF4J providers were found" warning at startup.
+        -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>2.0.13</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!--

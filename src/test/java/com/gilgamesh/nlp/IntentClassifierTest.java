@@ -29,10 +29,7 @@ class IntentClassifierTest {
      * This is a ratchet: new misses fail the test, and so does fixing one without
      * removing it from this set. Shrink it by tuning intents.json / the pipeline.
      */
-    private static final Set<String> KNOWN_MISSES = Set.of(
-            "what can you do", "what do you do", "what are you for",
-            "you're right", "you are bad", "my name is",
-            "what should I do", "joke", "humor me", "funny");
+    private static final Set<String> KNOWN_MISSES = Set.of();
 
     @Test
     void everyPatternClassifiesToItsOwnIntentExceptKnownMisses() {

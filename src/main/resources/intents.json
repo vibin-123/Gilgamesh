@@ -18,7 +18,7 @@
         "are you artificial intelligence"
       ],
       "responses": [
-        "I'm Gilgamesh, an NLP chatbot built in Java! I use tokenization and Jaccard similarity to understand what you're saying.",
+        "I'm Gilgamesh, an NLP chatbot built in Java! I use tokenization, stemming and TF-IDF similarity to understand what you're saying, and I remember our conversation.",
         "I'm not human — I'm Gilgamesh, a program that processes your words using natural language processing techniques.",
         "I'm Gilgamesh! An AI chatbot demonstrating core NLP concepts like tokenization, stopword removal, and intent classification.",
         "I'm a Java-based chatbot. I analyze your text by breaking it into tokens and matching it against known patterns. Pretty neat, right?",
@@ -55,14 +55,13 @@
         "what's your purpose",
         "why were you built",
         "why do you exist",
-        "what are you for",
-        "what is your function",
-        "how can you help me"
+        "what are you used for",
+        "what is your function"
       ],
       "responses": [
-        "I can chat with you about a variety of topics! I understand greetings, jokes, questions about NLP, and much more. Try asking me something!",
-        "My purpose is to demonstrate how NLP works — I tokenize your words, remove stopwords, and classify your intent using Jaccard similarity. But I'm also fun to talk to!",
-        "I'm built to show how chatbots understand human language. I can handle greetings, jokes, questions about myself, and general small talk.",
+        "I can chat about a variety of topics! I can check the live weather for a city, tell you the date and time, answer questions about Java, Python and NLP, tell jokes, and follow up on what we were just talking about.",
+        "My purpose is to demonstrate how NLP works — I tokenize your words, correct typos, remove stopwords, and classify your intent using TF-IDF similarity. But I'm also fun to talk to!",
+        "I'm built to show how chatbots understand human language. I can handle greetings, jokes, live weather, questions about myself, and general small talk.",
         "I process your text through an NLP pipeline and figure out what you mean. I'm a demo chatbot, but I can hold a decent conversation!",
         "I exist to demonstrate core NLP concepts! But beyond that, I can chat, tell jokes, and answer questions about how I work."
       ]
@@ -89,7 +88,7 @@
       ],
       "responses": [
         "I was built by a developer exploring NLP concepts in Java. Think of me as their learning project brought to life!",
-        "My creator is a developer who wanted to demonstrate how natural language processing works from scratch, without relying on external APIs.",
+        "My creator is a developer who wanted to demonstrate how natural language processing works from scratch, without relying on an AI service.",
         "I was coded in Java using Apache OpenNLP and Gson. A handcrafted chatbot, if you will!",
         "A developer built me as an educational project to showcase NLP techniques like tokenization and intent classification.",
         "I was designed and coded by a developer passionate about NLP. I'm their way of making language processing tangible!"
@@ -339,11 +338,10 @@
         "usage"
       ],
       "responses": [
-        "I can chat about various topics! Try saying hello, asking who I am, requesting a joke, or asking about the weather.",
-        "Just type naturally! I understand greetings, questions about myself, jokes, weather queries, and more. Type 'quit' to exit.",
-        "Here's what I can help with: greetings, farewells, jokes, weather talk, NLP explanations, small talk, and questions about how I work. Just ask!",
-        "I'm an NLP chatbot — I understand your intent by analyzing your words. Try asking me about myself, my name, a joke, or how NLP works!",
-        "You can ask me about: who I am, my name, jokes, the weather, NLP, or just chat casually. I understand more than you might think!"
+        "Here's what I can do: live weather ('weather in Paris'), the date and time, questions about Java, Python and NLP ('who created Java?'), jokes, fun facts, and small talk. You can follow up with 'it' and I'll know what you mean.",
+        "Just type naturally! Try 'weather in London', 'what time is it', 'tell me about Python', 'who created it?', or 'tell me a joke'. Type 'reset' to clear my memory and 'quit' to exit.",
+        "I can help with: live weather for a city, date and time, programming languages (Java, Python), NLP explanations, jokes, fun facts, and questions about how I work. Just ask!",
+        "I'm an NLP chatbot — I understand your intent by analyzing your words, and I remember the conversation. Try 'tell me about Java', then 'what are its advantages?'."
       ]
     },
 
@@ -449,10 +447,7 @@
         "what did you say"
       ],
       "responses": [
-        "I'm afraid I don't remember my exact last message — each turn is a fresh start for me! Try asking again?",
-        "I don't have memory of previous turns, so I can't repeat myself. Could you rephrase your question?",
-        "Sorry, I process each message independently! If you ask again, I'll give you a fresh answer.",
-        "Each message is a new beginning for me! Try rephrasing and I'll do my best."
+        "I haven't said anything yet! Ask me something first."
       ]
     },
 
@@ -739,8 +734,7 @@
         "got any jokes",
         "humor me",
         "tell a joke",
-        "crack a joke",
-        "funny"
+        "crack a joke"
       ],
       "responses": [
         "Why do Java developers wear glasses? Because they can't C#! 😄",
@@ -818,25 +812,39 @@
     {
       "tag": "about_technology",
       "patterns": [
+        "programming",
+        "coding",
+        "software development",
+        "what is programming",
+        "tell me about coding",
+        "computer science",
+        "how were you built",
+        "what are you built with",
+        "what technology do you use"
+      ],
+      "responses": [
+        "I'm built with Java, Apache OpenNLP for tokenization, and Gson for JSON parsing.",
+        "Programming is the art of telling computers what to do. I'm a product of it! My code handles text processing and intent matching.",
+        "I'm a result of software development! My creator used Java, Maven, and NLP libraries to bring me to life.",
+        "Computer science is fascinating! I'm a small example of how it intersects with linguistics through NLP."
+      ]
+    },
+
+    {
+      "tag": "about_java",
+      "patterns": [
         "what is Java",
         "explain Java",
         "tell me about Java",
         "describe Java",
         "what is Java language",
         "Java programming",
-        "programming",
-        "coding",
-        "software development",
-        "what is programming",
-        "tell me about coding",
-        "computer science"
+        "information about Java"
       ],
       "responses": [
-        "Java is the programming language I'm built with! It's known for its 'write once, run anywhere' philosophy thanks to the JVM. ☕",
-        "I'm specifically built with Java, Apache OpenNLP for NLP, and Gson for JSON parsing.",
-        "Programming is the art of telling computers what to do. I'm a product of it! My code handles text processing and intent matching.",
-        "I'm a result of software development! My creator used Java, Maven, and NLP libraries to bring me to life.",
-        "Computer science is fascinating! I'm a small example of how it intersects with linguistics through NLP."
+        "Java is a general-purpose, object-oriented programming language known for its 'write once, run anywhere' philosophy: code compiles to bytecode that runs on any machine with a JVM. ☕",
+        "Java is a statically typed, class-based language released by Sun Microsystems in 1995. It is widely used for enterprise systems, Android apps, and large backend services.",
+        "Java is one of the world's most widely used programming languages, valued for its portability, strong typing, and huge ecosystem of libraries."
       ]
     },
 
@@ -877,10 +885,7 @@
         "climate"
       ],
       "responses": [
-        "I can't check live weather data, but understanding weather queries is a classic NLP task! Try a weather API for real data.",
-        "I don't have access to weather services, but I recognized your weather intent! That's NLP in action.",
-        "Weather recognition — check! But I'm an offline NLP demo, so I can't fetch real forecasts. Try OpenWeatherMap for that!",
-        "I detected you're asking about weather! While I can't provide forecasts, recognizing this intent shows how NLP categorization works."
+        "Which city would you like the weather for?"
       ]
     },
 

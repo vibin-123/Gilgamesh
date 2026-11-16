@@ -31,15 +31,18 @@ public class TextPreprocessor {
 
     private static final Set<String> STOPWORDS = Set.of(
             "a", "an", "the",
-            "i", "me", "my", "you", "your", "he", "she", "it", "we", "they",
+            // "i", "me", "my", "you", "your" are intentionally kept: in a chatbot they decide
+            // who the sentence is about ("you are bad" vs "my bad", "my name" vs "your name")
+            "he", "she", "it", "we", "they",
             "him", "her", "us", "them", "its", "our", "their",
             "in", "on", "at", "to", "for", "of", "with", "by", "from", "up",
             "into", "through", "during", "before", "after",
             "and", "but", "or", "nor", "so", "yet",
             "is", "am", "are", "was", "were", "be", "been", "being",
-            "have", "has", "had", "do", "does", "did",
+            // "do" and "can" are kept too: "what can you do" must differ from "what are you"
+            "have", "has", "had", "does", "did",
             "will", "would", "shall", "should", "may", "might", "must",
-            "can", "could",
+            "could",
             // Negations ("no", "not") are intentionally kept: they flip meaning
             "this", "that", "these", "those",
             "if", "then", "than", "too", "very", "just",

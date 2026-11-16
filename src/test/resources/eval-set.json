@@ -1,0 +1,216 @@
+{
+  "description": "Held-out phrasings that do NOT appear in intents.json. 'expected' is the intent tag, or null when the bot should fall back.",
+  "cases": [
+    {"text": "so what exactly are you", "expected": "identity"},
+    {"text": "are you a real person", "expected": "identity"},
+    {"text": "am I talking to a machine", "expected": "identity"},
+
+    {"text": "what do they call you", "expected": "bot_name"},
+    {"text": "may I know your name", "expected": "bot_name"},
+    {"text": "your name please", "expected": "bot_name"},
+
+    {"text": "what are you able to do", "expected": "purpose"},
+    {"text": "what kind of things can you do", "expected": "purpose"},
+    {"text": "what's your job", "expected": "purpose"},
+
+    {"text": "who is your maker", "expected": "creator"},
+    {"text": "who programmed Gilgamesh", "expected": "creator"},
+    {"text": "which person built you", "expected": "creator"},
+
+    {"text": "what's your age", "expected": "age"},
+    {"text": "how old is Gilgamesh", "expected": "age"},
+    {"text": "when is your birthday", "expected": "age"},
+
+    {"text": "where do you stay", "expected": "location"},
+    {"text": "which country do you live in", "expected": "location"},
+    {"text": "where is your home", "expected": "location"},
+
+    {"text": "hello Gilgamesh", "expected": "greeting"},
+    {"text": "hey bot", "expected": "greeting"},
+    {"text": "hi, anyone there", "expected": "greeting"},
+
+    {"text": "good morning Gilgamesh", "expected": "good_morning"},
+    {"text": "morning buddy", "expected": "good_morning"},
+    {"text": "a very good morning to you", "expected": "good_morning"},
+
+    {"text": "good afternoon to you", "expected": "good_afternoon"},
+    {"text": "afternoon Gilgamesh", "expected": "good_afternoon"},
+    {"text": "good afternoon friend", "expected": "good_afternoon"},
+
+    {"text": "good evening Gilgamesh", "expected": "good_evening"},
+    {"text": "evening friend", "expected": "good_evening"},
+    {"text": "a good evening to you", "expected": "good_evening"},
+
+    {"text": "good night Gilgamesh", "expected": "good_night"},
+    {"text": "I'm going to bed", "expected": "good_night"},
+    {"text": "off to sleep now", "expected": "good_night"},
+
+    {"text": "bye bye", "expected": "goodbye"},
+    {"text": "see you tomorrow", "expected": "goodbye"},
+    {"text": "I have to go now", "expected": "goodbye"},
+
+    {"text": "how are you today", "expected": "how_are_you"},
+    {"text": "how is everything going", "expected": "how_are_you"},
+    {"text": "are you doing alright", "expected": "how_are_you"},
+
+    {"text": "thanks a bunch", "expected": "thanks"},
+    {"text": "thank you very much", "expected": "thanks"},
+    {"text": "I really appreciate that", "expected": "thanks"},
+
+    {"text": "sorry about that", "expected": "apology"},
+    {"text": "I apologize for that", "expected": "apology"},
+    {"text": "please forgive me", "expected": "apology"},
+
+    {"text": "can you help me", "expected": "help"},
+    {"text": "I need some help", "expected": "help"},
+    {"text": "what can I ask you", "expected": "help"},
+
+    {"text": "yes please", "expected": "affirmative"},
+    {"text": "yeah sure", "expected": "affirmative"},
+    {"text": "absolutely yes", "expected": "affirmative"},
+
+    {"text": "no thank you", "expected": "negative"},
+    {"text": "nope not really", "expected": "negative"},
+    {"text": "definitely not", "expected": "negative"},
+
+    {"text": "I totally agree with you", "expected": "agree"},
+    {"text": "that is a good point", "expected": "agree"},
+    {"text": "yes that makes sense", "expected": "agree"},
+
+    {"text": "I don't think that's right", "expected": "disagree"},
+    {"text": "you are wrong", "expected": "disagree"},
+    {"text": "that is incorrect", "expected": "disagree"},
+
+    {"text": "could you repeat that", "expected": "repeat"},
+    {"text": "please say that again", "expected": "repeat"},
+    {"text": "what did you just say", "expected": "repeat"},
+
+    {"text": "I am so happy today", "expected": "user_happy"},
+    {"text": "I'm feeling fantastic", "expected": "user_happy"},
+    {"text": "I feel wonderful", "expected": "user_happy"},
+
+    {"text": "I am feeling sad", "expected": "user_sad"},
+    {"text": "I'm really upset today", "expected": "user_sad"},
+    {"text": "I feel down today", "expected": "user_sad"},
+
+    {"text": "you are amazing", "expected": "compliment"},
+    {"text": "great job", "expected": "compliment"},
+    {"text": "you're really smart", "expected": "compliment"},
+
+    {"text": "you're so dumb", "expected": "insult"},
+    {"text": "you are a useless bot", "expected": "insult"},
+    {"text": "you are the worst", "expected": "insult"},
+
+    {"text": "haha that was funny", "expected": "laughing"},
+    {"text": "lol good one", "expected": "laughing"},
+    {"text": "that is hilarious", "expected": "laughing"},
+
+    {"text": "I really love you", "expected": "love"},
+    {"text": "I like you a lot", "expected": "love"},
+    {"text": "will you marry me", "expected": "love"},
+
+    {"text": "my name is Alex", "expected": "small_talk_name"},
+    {"text": "you can call me Sam", "expected": "small_talk_name"},
+    {"text": "I go by Jordan", "expected": "small_talk_name"},
+
+    {"text": "I'm so bored", "expected": "bored"},
+    {"text": "I am bored, entertain me", "expected": "bored"},
+    {"text": "there is nothing to do", "expected": "bored"},
+
+    {"text": "which color do you like", "expected": "favorite_color"},
+    {"text": "what's your favourite colour", "expected": "favorite_color"},
+    {"text": "do you have a favorite color", "expected": "favorite_color"},
+
+    {"text": "what do you like to eat", "expected": "favorite_food"},
+    {"text": "which food is your favorite", "expected": "favorite_food"},
+    {"text": "what's your favourite food", "expected": "favorite_food"},
+
+    {"text": "what songs do you like", "expected": "favorite_music"},
+    {"text": "what kind of music do you listen to", "expected": "favorite_music"},
+    {"text": "what's your favorite song", "expected": "favorite_music"},
+
+    {"text": "what do you do in your free time", "expected": "hobbies"},
+    {"text": "do you have any hobbies", "expected": "hobbies"},
+    {"text": "what do you like doing for fun", "expected": "hobbies"},
+
+    {"text": "what's your opinion", "expected": "opinions"},
+    {"text": "what are your thoughts", "expected": "opinions"},
+    {"text": "tell me what you think", "expected": "opinions"},
+
+    {"text": "tell me a funny joke", "expected": "joke"},
+    {"text": "do you know any jokes", "expected": "joke"},
+    {"text": "can you tell me a joke", "expected": "joke"},
+
+    {"text": "tell me a fun fact", "expected": "fun_fact"},
+    {"text": "give me an interesting fact", "expected": "fun_fact"},
+    {"text": "tell me something cool", "expected": "fun_fact"},
+
+    {"text": "what does NLP mean", "expected": "nlp_explanation"},
+    {"text": "can you explain natural language processing", "expected": "nlp_explanation"},
+    {"text": "how does natural language processing work", "expected": "nlp_explanation"},
+
+    {"text": "what's the meaning of life", "expected": "meaning_of_life"},
+    {"text": "what is the purpose of life", "expected": "meaning_of_life"},
+    {"text": "why are we all here", "expected": "meaning_of_life"},
+
+    {"text": "what is coding", "expected": "about_technology"},
+    {"text": "tell me about programming", "expected": "about_technology"},
+    {"text": "what is computer science", "expected": "about_technology"},
+
+    {"text": "can you tell me about Java", "expected": "about_java"},
+    {"text": "what's Java", "expected": "about_java"},
+    {"text": "I want to learn about Java", "expected": "about_java"},
+
+    {"text": "are you better than ChatGPT", "expected": "chatbot_comparison"},
+    {"text": "how are you different from ChatGPT", "expected": "chatbot_comparison"},
+    {"text": "are you like other chatbots", "expected": "chatbot_comparison"},
+
+    {"text": "what is the weather like today", "expected": "weather"},
+    {"text": "will it rain tomorrow", "expected": "weather"},
+    {"text": "how's the weather in Paris", "expected": "weather"},
+
+    {"text": "what's the time", "expected": "datetime"},
+    {"text": "what is today's date", "expected": "datetime"},
+    {"text": "do you know what time it is", "expected": "datetime"},
+
+    {"text": "which languages can you speak", "expected": "languages"},
+    {"text": "do you speak French", "expected": "languages"},
+    {"text": "can you talk in other languages", "expected": "languages"},
+
+    {"text": "what's Python", "expected": "about_python"},
+    {"text": "can you tell me about Python", "expected": "about_python"},
+    {"text": "I want to learn about Python", "expected": "about_python"},
+
+    {"text": "who is the inventor of Java", "expected": "java_creator"},
+    {"text": "who came up with Java", "expected": "java_creator"},
+    {"text": "Java was created by whom", "expected": "java_creator"},
+
+    {"text": "who is the inventor of Python", "expected": "python_creator"},
+    {"text": "who came up with Python", "expected": "python_creator"},
+    {"text": "Python was made by whom", "expected": "python_creator"},
+
+    {"text": "why should I use Java", "expected": "java_advantages"},
+    {"text": "what is Java good for", "expected": "java_advantages"},
+    {"text": "what are the benefits of using Java", "expected": "java_advantages"},
+
+    {"text": "why should I use Python", "expected": "python_advantages"},
+    {"text": "what is Python good for", "expected": "python_advantages"},
+    {"text": "what are the benefits of using Python", "expected": "python_advantages"},
+
+    {"text": "book me a flight to Tokyo", "expected": null},
+    {"text": "what is the capital of France", "expected": null},
+    {"text": "how do I cook pasta", "expected": null},
+    {"text": "play some rock music", "expected": null},
+    {"text": "what is the stock price of Apple", "expected": null},
+    {"text": "translate hello to Spanish", "expected": null},
+    {"text": "set an alarm for 7 am", "expected": null},
+    {"text": "who won the world cup", "expected": null},
+    {"text": "order a pizza", "expected": null},
+    {"text": "what is 2 plus 2", "expected": null},
+    {"text": "recommend a good movie", "expected": null},
+    {"text": "how tall is Mount Everest", "expected": null},
+    {"text": "open the calendar app", "expected": null},
+    {"text": "send an email to my boss", "expected": null},
+    {"text": "asdf qwerty zxcv", "expected": null}
+  ]
+}
