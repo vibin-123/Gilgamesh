@@ -48,6 +48,8 @@
 
     {
       "tag": "purpose",
+      "category": "How I work",
+      "example": "what can you do",
       "patterns": [
         "what can you do",
         "what do you do",
@@ -151,7 +153,7 @@
         "greetings"
       ],
       "responses": [
-        "Hello! How can I help you today?",
+        "Hello{, user_name}! How can I help you today?",
         "Hey there! What's on your mind?",
         "Hi! I'm Gilgamesh, your NLP chatbot. Ask me anything!",
         "Greetings! How may I assist you?",
@@ -242,7 +244,7 @@
         "peace out"
       ],
       "responses": [
-        "Goodbye! Have a great day!",
+        "Goodbye{, user_name}! Have a great day!",
         "See you later! Take care!",
         "Farewell! It was nice chatting with you.",
         "Bye! Come back anytime.",
@@ -438,6 +440,8 @@
 
     {
       "tag": "repeat",
+      "category": "Conversation",
+      "example": "say that again",
       "patterns": [
         "say that again",
         "repeat that",
@@ -584,14 +588,31 @@
     },
 
     {
-      "tag": "small_talk_name",
+      "tag": "user_name_recall",
+      "category": "About you",
+      "example": "what is my name",
       "patterns": [
-        "my name is",
-        "I'm called",
-        "call me",
-        "they call me",
-        "people call me",
-        "I go by"
+        "what is my name",
+        "do you know my name",
+        "who am I",
+        "have I told you my name"
+      ],
+      "responses": [
+        "I don't know your name yet. What should I call you?"
+      ]
+    },
+
+    {
+      "tag": "small_talk_name",
+      "category": "About you",
+      "example": "my name is Sam",
+      "patterns": [
+        "my name is {username}",
+        "I'm called {username}",
+        "call me {username}",
+        "they call me {username}",
+        "people call me {username}",
+        "I go by {username}"
       ],
       "responses": [
         "Nice to meet you! Great name. How can I help you today? 😊",
@@ -726,6 +747,8 @@
 
     {
       "tag": "joke",
+      "category": "Fun",
+      "example": "tell me a joke",
       "patterns": [
         "tell me a joke",
         "joke",
@@ -749,6 +772,8 @@
 
     {
       "tag": "fun_fact",
+      "category": "Fun",
+      "example": "tell me a fun fact",
       "patterns": [
         "tell me a fact",
         "fun fact",
@@ -772,6 +797,8 @@
 
     {
       "tag": "nlp_explanation",
+      "category": "How I work",
+      "example": "what is NLP",
       "patterns": [
         "what is NLP",
         "explain NLP",
@@ -811,6 +838,8 @@
 
     {
       "tag": "about_technology",
+      "category": "How I work",
+      "example": "how were you built",
       "patterns": [
         "programming",
         "coding",
@@ -854,6 +883,8 @@
 
     {
       "tag": "weather",
+      "category": "Live data",
+      "example": "weather in Paris",
       "patterns": [
         "weather",
         "what's the weather",
@@ -864,7 +895,12 @@
         "weather forecast",
         "what's it like outside",
         "rain today",
-        "climate"
+        "climate",
+        "weather in {place}",
+        "what's the weather in {place}",
+        "forecast for {place}",
+        "temperature in {place}",
+        "is it raining in {place}"
       ],
       "responses": [
         "Which city would you like the weather for?"
@@ -873,6 +909,8 @@
 
     {
       "tag": "datetime",
+      "category": "Live data",
+      "example": "what time is it in Tokyo",
       "patterns": [
         "what day is it",
         "what time is it",
@@ -880,7 +918,12 @@
         "current time",
         "tell me the time",
         "date today",
-        "what's today's date"
+        "what's today's date",
+        "what is the date",
+        "what day is today",
+        "time in {place}",
+        "what time is it in {place}",
+        "date in {place}"
       ],
       "responses": [
         "The time is dynamic!"
@@ -909,6 +952,8 @@
 
     {
       "tag": "entity_about",
+      "category": "Programming languages",
+      "example": "tell me about Rust",
       "patterns": [
         "what is {entity}",
         "explain {entity}",
@@ -926,6 +971,8 @@
 
     {
       "tag": "entity_creator",
+      "category": "Programming languages",
+      "example": "who created Python?",
       "patterns": [
         "who created {entity}",
         "who developed {entity}",
@@ -944,6 +991,8 @@
 
     {
       "tag": "entity_advantages",
+      "category": "Programming languages",
+      "example": "what are Java's advantages?",
       "patterns": [
         "what are {entity}'s advantages",
         "what are the advantages of {entity}",

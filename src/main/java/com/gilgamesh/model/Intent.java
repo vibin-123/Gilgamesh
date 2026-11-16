@@ -10,6 +10,10 @@ public class Intent {
     private String tag;
     private List<String> patterns;
     private List<String> responses;
+    /** Optional: the help section this intent is listed under (e.g. "Live data"). */
+    private String category;
+    /** Optional: an example message shown in help. Intents without one are not listed. */
+    private String example;
 
     public Intent() {}
 
@@ -41,6 +45,22 @@ public class Intent {
 
     public void setResponses(List<String> responses) {
         this.responses = responses;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getExample() {
+        return example;
+    }
+
+    public void setExample(String example) {
+        this.example = example;
     }
 
     @Override

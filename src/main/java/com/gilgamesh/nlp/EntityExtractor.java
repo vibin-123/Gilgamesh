@@ -191,9 +191,24 @@ public class EntityExtractor {
     // Bare follow-up: "and in London?", "in Tokyo"
     private static final Pattern FOLLOW_UP_LOCATION_PATTERN = Pattern.compile(
             "(?i)^(?:and\\s+|what about\\s+|how about\\s+)?(?:in|for|at)\\s+([A-Za-z][A-Za-z .'-]*?)\\s*[?.!]*$");
+    // "... time/date/day ... in <City>": "what time is it in Tokyo", "current date in New York"
+    private static final Pattern TIME_LOCATION_PATTERN = Pattern.compile(
+            "(?i)\\b(?:time|date|day|clock)\\b.*?\\bin\\s+"
+                    + "([A-Za-z][A-Za-z .'-]*?)(?=\\s+(?:today|tonight|tomorrow|now|right now|currently|please)\\b|[?.!,]|$)");
+    private static final List<Pattern> LOCATION_PATTERNS =
+            List.of(WEATHER_LOCATION_PATTERN, TIME_LOCATION_PATTERN, FOLLOW_UP_LOCATION_PATTERN);
+
+    /** Placeholder that stands for "any place" in intent patterns and masked input. */
+    public static final String PLACE_PLACEHOLDER = "{place}";
+
     private static final Set<String> NOT_A_PLACE = Set.of(
             "the", "a", "an", "it", "this", "that", "here", "there", "general", "my area", "my city",
-            "my location", "the world", "me", "us", "you", "java", "python");
+            "my location", "the world", "me", "us", "you", "java", "python",
+            // times of day and filler phrases: "in the morning", "for example", "at all", "in fact"
+            "the morning", "the afternoon", "the evening", "the night", "morning", "afternoon", "evening",
+            "night", "today", "tonight", "tomorrow", "now", "example", "all", "sure", "real", "least",
+            "fact", "total", "short", "particular", "case", "time", "addition", "advance", "detail");
+    private static final Pattern NOT_A_PLACE_PREFIX = Pattern.compile("(?i)^(?:a|an|my|your|this|that|some|any)\\s.*");
 
     /**
      * Extracts a city/place from a weather-style query or a bare "in London?" follow-up.
@@ -204,15 +219,101 @@ public class EntityExtractor {
         if (userInput == null || userInput.isBlank()) {
             return Optional.empty();
         }
+        Matcher matcher = findLocationMatch(userInput.trim());
+        return matcher == null ? Optional.empty() : toLocation(matcher.group(1));
+    }
+
+    /**
+     * Replaces the place named in a weather/time query with {@link #PLACE_PLACEHOLDER}, so that
+     * "weather in Paris" and "weather in Ulaanbaatar" both become "weather in {place}" and match
+     * the same intent pattern, however unusual the city name is.
+     *
+     * @return the masked text, or the input unchanged if it names no place
+     */
+    public String maskLocation(String userInput) {
+        if (userInput == null || userInput.isBlank()) {
+            return userInput;
+        }
         String text = userInput.trim();
-        Matcher matcher = WEATHER_LOCATION_PATTERN.matcher(text);
-        if (!matcher.find()) {
-            matcher = FOLLOW_UP_LOCATION_PATTERN.matcher(text);
-            if (!matcher.find()) {
-                return Optional.empty();
+        Matcher matcher = findLocationMatch(text);
+        if (matcher == null) {
+            return userInput;
+        }
+        return text.substring(0, matcher.start(1)) + PLACE_PLACEHOLDER + text.substring(matcher.end(1));
+    }
+
+    /** @return a matcher whose group 1 is a plausible place name, or null if the text names no place */
+    private Matcher findLocationMatch(String text) {
+        for (Pattern pattern : LOCATION_PATTERNS) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find() && toLocation(matcher.group(1)).isPresent()) {
+                return matcher;
             }
         }
-        return toLocation(matcher.group(1));
+        return null;
+    }
+
+    // --- The user's own name ---
+
+    /** Placeholder that stands for "the name the user gave" in intent patterns and masked input. */
+    public static final String USER_NAME_PLACEHOLDER = "{username}";
+
+    // "my name is Sam", "call me Sam", "I go by Sam Lee" -> group 1 is the name (one or two words)
+    private static final Pattern USER_NAME_PATTERN = Pattern.compile(
+            "(?i)\\b(?:my name is|my name's|i am called|i'm called|you can call me|call me|they call me|people call me|i go by)"
+                    + "\\s+([A-Za-z][A-Za-z'-]*(?:\\s+[A-Za-z][A-Za-z'-]*)?)");
+    private static final Set<String> NOT_A_NAME = Set.of(
+            "not", "a", "an", "the", "none", "nobody", "nothing", "something", "anything", "whatever", "what",
+            "maybe", "later", "back", "when", "if", "please", "and", "but", "so");
+
+    /**
+     * Pulls the user's name out of an introduction such as "my name is sam" (-> "Sam").
+     *
+     * @return the capitalised name, or empty if the message doesn't state one
+     */
+    public Optional<String> extractUserName(String userInput) {
+        if (userInput == null) return Optional.empty();
+        Matcher matcher = USER_NAME_PATTERN.matcher(userInput);
+        return matcher.find() ? cleanUserName(matcher.group(1)) : Optional.empty();
+    }
+
+    /**
+     * Replaces the name in an introduction with {@link #USER_NAME_PLACEHOLDER}, so that
+     * "my name is Sam" (an introduction) and "what is my name" (a question) no longer look
+     * alike to the classifier: only the introduction carries the placeholder.
+     *
+     * @return the masked text, or the input unchanged if it states no name
+     */
+    public String maskUserName(String userInput) {
+        if (userInput == null) return null;
+        Matcher matcher = USER_NAME_PATTERN.matcher(userInput);
+        if (!matcher.find()) return userInput;
+        Optional<String> name = cleanUserName(matcher.group(1));
+        if (name.isEmpty()) return userInput;
+        // Mask only the words that were kept as the name ("Sam and I like Java" keeps "Sam")
+        int nameWords = name.get().split("\\s+").length;
+        Matcher words = Pattern.compile("\\S+").matcher(matcher.group(1));
+        int end = matcher.start(1);
+        for (int i = 0; i < nameWords && words.find(); i++) {
+            end = matcher.start(1) + words.end();
+        }
+        return userInput.substring(0, matcher.start(1)) + USER_NAME_PLACEHOLDER + userInput.substring(end);
+    }
+
+    /**
+     * Normalises a bare name ("sam lee" -> "Sam Lee"), stopping at the first filler word.
+     *
+     * @return the capitalised name, or empty if the text isn't plausibly a name
+     */
+    public Optional<String> cleanUserName(String rawName) {
+        if (rawName == null) return Optional.empty();
+        StringBuilder name = new StringBuilder();
+        for (String word : rawName.trim().split("\\s+")) {
+            if (word.isEmpty() || NOT_A_NAME.contains(word.toLowerCase())) break;
+            if (name.length() > 0) name.append(' ');
+            name.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return name.length() == 0 ? Optional.empty() : Optional.of(name.toString());
     }
 
     /**
@@ -224,7 +325,8 @@ public class EntityExtractor {
             return Optional.empty();
         }
         String place = rawPlace.trim().replaceAll("[?.!,]+$", "").trim();
-        if (place.length() < 2 || NOT_A_PLACE.contains(place.toLowerCase())) {
+        if (place.length() < 2 || NOT_A_PLACE.contains(place.toLowerCase())
+                || NOT_A_PLACE_PREFIX.matcher(place).matches()) {
             return Optional.empty();
         }
         StringBuilder name = new StringBuilder();

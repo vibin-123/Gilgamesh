@@ -8,7 +8,9 @@ import com.gilgamesh.nlp.ReferenceResolver;
 import com.gilgamesh.nlp.TextPreprocessor;
 import com.gilgamesh.response.DateTimeIntentHandler;
 import com.gilgamesh.data.KnowledgeBase;
+import com.gilgamesh.response.HelpIntentHandler;
 import com.gilgamesh.response.IntentHandler;
+import com.gilgamesh.response.UserNameIntentHandler;
 import com.gilgamesh.response.KnowledgeIntentHandler;
 import com.gilgamesh.response.OpenMeteoWeatherClient;
 import com.gilgamesh.response.RepeatIntentHandler;
@@ -20,6 +22,8 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -45,7 +49,8 @@ public class Main {
 
         ConversationManager conversationManager;
         try {
-            conversationManager = buildConversationManager(Arrays.asList(args).contains("--fresh"));
+            GilgameshConfig config = GilgameshConfig.load(configFileFrom(args));
+            conversationManager = buildConversationManager(config, Arrays.asList(args).contains("--fresh"));
         } catch (Exception e) {
             System.err.println("Gilgamesh failed to start: " + e.getMessage());
             Logger.getLogger(Main.class.getName()).log(Level.FINE, "Startup failure", e);
@@ -110,7 +115,27 @@ public class Main {
         }
     }
 
-    private static ConversationManager buildConversationManager(boolean fresh) {
+    /**
+     * Reads the path given with "--config <file>" or "--config=<file>".
+     *
+     * @return the path, or null if the option wasn't used
+     */
+    static Path configFileFrom(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("--config=")) {
+                return Paths.get(args[i].substring("--config=".length()));
+            }
+            if (args[i].equals("--config")) {
+                if (i + 1 >= args.length) {
+                    throw new IllegalArgumentException("--config needs a file path");
+                }
+                return Paths.get(args[i + 1]);
+            }
+        }
+        return null;
+    }
+
+    private static ConversationManager buildConversationManager(GilgameshConfig config, boolean fresh) {
         // 1. Load intent definitions from intents.json
         IntentRepository repository = new IntentRepository();
 
@@ -120,20 +145,24 @@ public class Main {
         // 3. Create Reference Resolver for anaphora resolution ("it", "that", "he", "she")
         ReferenceResolver referenceResolver = new ReferenceResolver();
 
-        // 4. Create hybrid context-aware classifier
+        // 4. Create hybrid context-aware classifier, tuned from gilgamesh.properties
         IntentClassifier classifier = new IntentClassifier(repository, preprocessor);
+        config.applyTo(classifier);
 
-        // 5. Create response engine with non-repeating variations & progressive fallbacks
+        // 5. Create response engine: the first handler that accepts an intent answers it
+        OpenMeteoWeatherClient openMeteo = new OpenMeteoWeatherClient();
         List<IntentHandler> handlers = List.of(
-                new DateTimeIntentHandler(),
-                new WeatherIntentHandler(new OpenMeteoWeatherClient()),
+                new DateTimeIntentHandler(openMeteo),
+                new WeatherIntentHandler(openMeteo),
                 new RepeatIntentHandler(),
+                new HelpIntentHandler(repository),
+                new UserNameIntentHandler(),
                 new KnowledgeIntentHandler(KnowledgeBase.loadDefault()),
                 new StaticIntentHandler());
         ResponseEngine responseEngine = new ResponseEngine(handlers);
 
         // 6. Create short-term conversation memory context
-        ConversationContext context = new ConversationContext();
+        ConversationContext context = config.newContext();
 
         // 7. Create entity extractor & turn analyzer for multi-turn discourse
         com.gilgamesh.nlp.EntityExtractor entityExtractor = new com.gilgamesh.nlp.EntityExtractor();
@@ -148,9 +177,10 @@ public class Main {
                 responseEngine,
                 context
         );
+        manager.setAmbiguityMargin(config.ambiguityMargin());
 
         // 9. Persist the conversation between runs (--fresh discards the saved session)
-        ConversationStore store = new ConversationStore(ConversationStore.defaultPath());
+        ConversationStore store = config.newStore();
         if (fresh) {
             store.delete();
         } else {

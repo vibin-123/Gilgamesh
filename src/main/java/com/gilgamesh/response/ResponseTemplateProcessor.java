@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * ResponseTemplateProcessor — Manages stateful response variations and variable interpolation.
@@ -62,9 +64,23 @@ public class ResponseTemplateProcessor {
 
         String topicStr = (context != null && context.getCurrentTopic() != null) ? context.getCurrentTopic() : "general";
 
-        return template
+        String userName = context != null ? context.getUserName() : null;
+
+        return interpolateUserName(template, userName)
             .replace("{time}", timeStr)
             .replace("{date}", dateStr)
             .replace("{topic}", topicStr);
+    }
+
+    // {user_name}, optionally with text that only appears when the name is known: "Hello{, user_name}!"
+    private static final Pattern USER_NAME_PLACEHOLDER = Pattern.compile("\\{([^{}]*?)user_name([^{}]*?)\\}");
+
+    /**
+     * Fills in the user's name. "Hello{, user_name}!" becomes "Hello, Sam!" when the name
+     * is known and "Hello!" when it is not, so responses read naturally either way.
+     */
+    static String interpolateUserName(String template, String userName) {
+        return USER_NAME_PLACEHOLDER.matcher(template).replaceAll(match -> Matcher.quoteReplacement(
+                userName == null ? "" : match.group(1) + userName + match.group(2)));
     }
 }

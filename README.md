@@ -125,8 +125,24 @@ Run tests and compile the project into a runnable fat JAR:
 
 ### Run
 ```bash
-java -jar target/gilgamesh-chatbot-1.0.0-shaded.jar
+java -jar target/gilgamesh-chatbot-1.0.0.jar
 ```
+
+Options:
+
+| Option | What it does |
+|---|---|
+| `--fresh` | Start a new conversation, discarding the saved one |
+| `--debug` | Show how each message was understood (intent, score, entities) |
+| `--config <file>` | Load settings from a properties file |
+
+While chatting, type `help` to see what you can ask, `reset` to make the bot forget the conversation (and your name), and `quit` to exit. The conversation is saved to `~/.gilgamesh/session.json` and restored on the next start.
+
+### Settings
+The defaults live in `src/main/resources/gilgamesh.properties`, which documents every setting (confidence threshold, context boost, memory sizes, session file). To change one, put a `gilgamesh.properties` containing only the settings you want to change in the folder you start the bot from, in `~/.gilgamesh/`, or pass it with `--config`. Invalid values are reported and replaced by the default.
+
+### Measuring accuracy
+`./mvnw test` prints `EVAL` lines: accuracy on `src/test/resources/eval-set.json`, a set of phrasings the bot was *not* taught, plus every miss. Check these numbers after changing intents or classifier settings.
 
 ---
 
@@ -151,6 +167,10 @@ After editing, rebuild with `./mvnw clean package`.
 **Tips for good patterns:**
 - Include multiple variations of how a user might express the intent.
 - The `SpellChecker` automatically populates its vocabulary from your patterns.
+- Add `"category"` and `"example"` to an intent to list it under `help`.
+- Use placeholders for the part that varies: `{entity}` (a known language), `{place}` (a city), `{username}` (the user's name), e.g. `"who created {entity}"`.
+
+**Adding a programming language** needs no intent at all: add an entry to `src/main/resources/knowledge.json` with its `about`, `creatorFact` and `advantages`.
 
 ---
 

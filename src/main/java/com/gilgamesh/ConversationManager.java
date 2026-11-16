@@ -16,6 +16,7 @@ import com.gilgamesh.nlp.EntityExtractor;
 import com.gilgamesh.nlp.IntentClassifier;
 import com.gilgamesh.nlp.ReferenceResolver;
 import com.gilgamesh.response.ResponseEngine;
+import com.gilgamesh.response.UserNameIntentHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,9 @@ public class ConversationManager {
      * ClassifierEvaluationTest: at 5% the question fires on 3 answers that would have been
      * wrong and 1 that would have been right; wider margins interrupt correct answers too often.
      */
-    static final double AMBIGUITY_MARGIN = 0.05;
+    public static final double DEFAULT_AMBIGUITY_MARGIN = 0.05;
+
+    private double ambiguityMargin = DEFAULT_AMBIGUITY_MARGIN;
 
     private final EntityExtractor entityExtractor;
     private final TurnAnalyzer turnAnalyzer;
@@ -98,6 +101,14 @@ public class ConversationManager {
      */
     public void setStore(ConversationStore store) {
         this.store = store;
+    }
+
+    /**
+     * Sets how close the top two intents must be before the bot asks "did you mean?".
+     * A negative value turns clarification off.
+     */
+    public void setAmbiguityMargin(double ambiguityMargin) {
+        this.ambiguityMargin = ambiguityMargin;
     }
 
     private void persist() {
@@ -159,9 +170,9 @@ public class ConversationManager {
                 resolvedInput = referenceResolver.resolveReferences(userInput, context);
             }
             // "and in London?" while talking about weather -> "weather in London"
-            String weatherQuery = completeWeatherFollowUp(userInput, topicBefore, turnEntities);
-            if (weatherQuery != null) {
-                resolvedInput = weatherQuery;
+            String placeQuery = completePlaceFollowUp(userInput, topicBefore, turnEntities);
+            if (placeQuery != null) {
+                resolvedInput = placeQuery;
             }
         }
 
@@ -222,6 +233,7 @@ public class ConversationManager {
 
     // --- Slot filling ---
 
+    /** A short reply made only of name-like characters (used for city and person-name answers). */
     private static final Pattern BARE_CITY = Pattern.compile("[A-Za-z][A-Za-z .'-]*");
     private static final Pattern WEATHER_WORDS = Pattern.compile("(?i)\\b(weather|forecast|temperature)\\b");
     private static final Pattern FIRST_CHOICE = Pattern.compile("(?i)^(?:the\\s+)?(?:first|1st|1|former)(?:\\s+one)?[.!]*$");
@@ -248,6 +260,16 @@ public class ConversationManager {
                 String subject = subjectOf(turnEntities);
                 return subject != null ? String.format(pending.queryTemplate(), subject) : null;
             }
+            case PendingQuestion.SLOT_NAME -> {
+                // "Sam" or "Sam Lee"; a reply the bot understands as something else ("never mind", "no") is not a name
+                if (!BARE_CITY.matcher(trimmed).matches() || trimmed.split("\\s+").length > 2
+                        || classifier.classifyDetailed(trimmed, null).isMatch()) {
+                    return null;
+                }
+                return UserNameIntentHandler.cleanName(trimmed)
+                        .map(name -> String.format(pending.queryTemplate(), name))
+                        .orElse(null);
+            }
             case PendingQuestion.SLOT_LOCATION -> {
                 // A short reply that is not itself something the bot understands ("no", "thanks") is the city
                 if (!BARE_CITY.matcher(trimmed).matches() || trimmed.split("\\s+").length > 3
@@ -266,19 +288,30 @@ public class ConversationManager {
         }
     }
 
+    private static final Pattern PLACE_QUESTION_WORDS =
+            Pattern.compile("(?i)\\b(weather|forecast|temperature|time|date|day|clock)\\b");
+
     /**
-     * If the conversation was about weather, rewrites "and in London?" into a full
-     * weather query so the classifier routes it to the weather intent.
+     * If the conversation was about weather or the time, rewrites a bare "and in London?"
+     * into the full question ("weather in London" / "time in London").
      *
-     * @return the rewritten query, or null if this isn't a weather follow-up
+     * @return the rewritten query, or null if this isn't such a follow-up
      */
-    private String completeWeatherFollowUp(String userInput, String topicBefore, List<Entity> turnEntities) {
-        if (!"weather".equals(topicBefore) || WEATHER_WORDS.matcher(userInput).find()) {
+    private String completePlaceFollowUp(String userInput, String topicBefore, List<Entity> turnEntities) {
+        String question;
+        if ("weather".equals(topicBefore)) {
+            question = "weather in ";
+        } else if ("datetime".equals(topicBefore)) {
+            question = "time in ";
+        } else {
             return null;
+        }
+        if (PLACE_QUESTION_WORDS.matcher(userInput).find()) {
+            return null; // already a full question
         }
         for (Entity entity : turnEntities) {
             if (entity.matchesType(Entity.EntityType.LOCATION)) {
-                return "weather in " + entity.getName();
+                return question + entity.getName();
             }
         }
         return null;
@@ -293,7 +326,7 @@ public class ConversationManager {
      * @return the question to ask, or null if the classification is clear enough
      */
     private String clarificationFor(Classification classification, List<Entity> turnEntities) {
-        if (!classification.isAmbiguous(AMBIGUITY_MARGIN)) {
+        if (!classification.isAmbiguous(ambiguityMargin)) {
             return null;
         }
         String first = exampleOf(classification.topIntent(), turnEntities);

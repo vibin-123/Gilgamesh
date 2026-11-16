@@ -10,7 +10,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * IntentRepository — Loads and provides access to intent definitions.
@@ -108,6 +111,24 @@ public class IntentRepository {
      */
     public List<Intent> getIntents() {
         return intents;
+    }
+
+    /**
+     * Groups the example messages of all intents that have one by their category,
+     * in the order they appear in intents.json. This is what "help" shows, and what
+     * a UI can offer as suggestions.
+     *
+     * @return category -> example messages (intents without a category go under "Other")
+     */
+    public Map<String, List<String>> examplesByCategory() {
+        Map<String, List<String>> grouped = new LinkedHashMap<>();
+        for (Intent intent : intents) {
+            if (intent.getExample() == null || intent.getExample().isBlank()) continue;
+            String category = intent.getCategory() == null || intent.getCategory().isBlank()
+                    ? "Other" : intent.getCategory();
+            grouped.computeIfAbsent(category, key -> new ArrayList<>()).add(intent.getExample());
+        }
+        return grouped;
     }
 
     /**

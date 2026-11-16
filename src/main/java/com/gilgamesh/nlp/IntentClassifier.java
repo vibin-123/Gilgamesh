@@ -32,7 +32,9 @@ public class IntentClassifier {
      * answers most out-of-scope questions with a wrong intent; above it, in-scope accuracy drops fast.
      */
     public static final double DEFAULT_CONFIDENCE_THRESHOLD = 0.40;
-    private static final double CONTEXT_BOOST_MULTIPLIER = 1.25;
+    public static final double DEFAULT_CONTEXT_BOOST = 1.25;
+    public static final double DEFAULT_OVERLAP_WEIGHT = 0.4;
+    public static final double DEFAULT_COSINE_WEIGHT = 0.6;
 
     private final IntentRepository repository;
     private final TextPreprocessor preprocessor;
@@ -42,11 +44,15 @@ public class IntentClassifier {
 
     private final Map<Intent, List<PatternData>> patternCache = new HashMap<>();
     private double confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD;
+    private double contextBoost = DEFAULT_CONTEXT_BOOST;
+    private double overlapWeight = DEFAULT_OVERLAP_WEIGHT;
+    private double cosineWeight = DEFAULT_COSINE_WEIGHT;
 
     /** Tag prefix of the generic intents whose subject comes from the knowledge base. */
     private static final String ENTITY_INTENT_PREFIX = "entity_";
 
     private final KnowledgeBase knowledgeBase;
+    private final EntityExtractor placeMasker;
 
     /** Creates a classifier that recognizes subjects from the bundled knowledge.json. */
     public IntentClassifier(IntentRepository repository, TextPreprocessor preprocessor) {
@@ -59,6 +65,7 @@ public class IntentClassifier {
      */
     public IntentClassifier(IntentRepository repository, TextPreprocessor preprocessor, KnowledgeBase knowledgeBase) {
         this.knowledgeBase = knowledgeBase;
+        this.placeMasker = knowledgeBase != null ? new EntityExtractor(knowledgeBase) : new EntityExtractor();
         this.repository = repository;
         this.preprocessor = preprocessor;
         this.tfidfVectorizer = new TfidfVectorizer();
@@ -121,6 +128,13 @@ public class IntentClassifier {
         // "who created Rust" -> "who created {entity}", so one generic pattern covers every known subject
         String maskedInput = (knowledgeBase != null && userInput != null)
                 ? knowledgeBase.maskEntities(userInput) : userInput;
+        // "weather in Ulaanbaatar" -> "weather in {place}", so an unusual city name can't sink the match
+        maskedInput = placeMasker.maskLocation(maskedInput);
+        // "my name is Sam" -> "my name is {username}", which tells an introduction apart from "what is my name"
+        maskedInput = placeMasker.maskUserName(maskedInput);
+        // Single words only: adding word pairs (bigrams) was measured on the eval set and
+        // lowered accuracy at every threshold, because with this little training data most
+        // pairs in a new phrasing are unseen and count against the match.
         List<String> userTokens = preprocessor.preprocess(maskedInput);
 
         if (userTokens.isEmpty()) {
@@ -147,8 +161,8 @@ public class IntentClassifier {
                 // Score 2: TF-IDF Cosine similarity
                 double cosine = tfidfVectorizer.computeCosineSimilarity(userTfidfVec, pattern.vector());
 
-                // Ensemble hybrid score (0.4 * Jaccard + 0.6 * Cosine)
-                double rawHybridScore = (0.4 * jaccard) + (0.6 * cosine);
+                // Ensemble hybrid score (by default 0.4 * weighted Jaccard + 0.6 * cosine)
+                double rawHybridScore = (overlapWeight * jaccard) + (cosineWeight * cosine);
 
                 if (rawHybridScore > maxPatternScoreForIntent) {
                     maxPatternScoreForIntent = rawHybridScore;
@@ -159,7 +173,7 @@ public class IntentClassifier {
 
             // Context-aware intent score boost
             if (isAboutTopic(intent, currentTopic)) {
-                finalScore *= CONTEXT_BOOST_MULTIPLIER;
+                finalScore *= contextBoost;
             }
 
             if (finalScore > bestScore) {
@@ -206,6 +220,24 @@ public class IntentClassifier {
 
     public void setConfidenceThreshold(double confidenceThreshold) {
         this.confidenceThreshold = confidenceThreshold;
+    }
+
+    /** Multiplier applied to intents that continue the current topic (1.0 = no boost). */
+    public void setContextBoost(double contextBoost) {
+        this.contextBoost = contextBoost;
+    }
+
+    /**
+     * Sets how the two similarity measures are mixed. They are normalised to sum to 1,
+     * so the score stays on the same scale as the confidence threshold.
+     */
+    public void setScoreWeights(double overlapWeight, double cosineWeight) {
+        double sum = overlapWeight + cosineWeight;
+        if (overlapWeight < 0 || cosineWeight < 0 || sum <= 0) {
+            throw new IllegalArgumentException("Score weights must be non-negative and not both zero");
+        }
+        this.overlapWeight = overlapWeight / sum;
+        this.cosineWeight = cosineWeight / sum;
     }
 
     /**

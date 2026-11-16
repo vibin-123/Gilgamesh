@@ -24,6 +24,8 @@ public class SessionSnapshot {
     public String lastUserMessage;
     public String lastBotResponse;
     public String lastIntentTag;
+    /** The user's name, or null if not given. */
+    public String userName;
     public List<EntityDto> recentEntities = new ArrayList<>();
     public List<TurnDto> history = new ArrayList<>();
     /** Suspended topics, most recent first. */

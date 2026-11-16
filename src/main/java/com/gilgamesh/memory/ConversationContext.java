@@ -54,6 +54,8 @@ public class ConversationContext {
     private String lastBotResponse;
     private String currentTopic;
     private PendingQuestion pendingQuestion;
+    /** The user's name once they have introduced themselves; kept when the conversation expires. */
+    private String userName;
     private final List<ConversationTurn> history;
     private final List<Entity> recentEntities;
     private final Deque<TopicState> topicStack;
@@ -308,7 +310,8 @@ public class ConversationContext {
         if (isExpired()) {
             LOG.fine("[ConversationContext] Context expired due to " 
                     + (isTurnLimitExpired() ? "turn limit." : "inactivity."));
-            reset();
+            // Expiry forgets the conversation, not who the user is
+            resetState();
             return true;
         }
         return false;
@@ -319,7 +322,19 @@ public class ConversationContext {
      */
     public synchronized void reset() {
         resetState();
+        this.userName = null;
         LOG.fine("[ConversationContext] Memory cleared.");
+    }
+
+    // --- What the bot knows about the user ---
+
+    /** @return the user's name, or null if they haven't given one */
+    public synchronized String getUserName() {
+        return userName;
+    }
+
+    public synchronized void setUserName(String userName) {
+        this.userName = (userName == null || userName.isBlank()) ? null : userName.trim();
     }
 
     // --- Slot filling: the question the bot is waiting on ---
@@ -363,6 +378,7 @@ public class ConversationContext {
         snapshot.lastBotResponse = lastBotResponse;
         snapshot.lastIntentTag = lastDetectedIntent != null ? lastDetectedIntent.getTag() : null;
         snapshot.recentEntities = SessionSnapshot.entitiesToDtos(recentEntities);
+        snapshot.userName = userName;
         if (pendingQuestion != null) {
             snapshot.pendingQuestion = new SessionSnapshot.PendingDto();
             snapshot.pendingQuestion.intentTag = pendingQuestion.intentTag();
@@ -397,6 +413,7 @@ public class ConversationContext {
         this.lastBotResponse = snapshot.lastBotResponse;
         this.lastDetectedIntent = SessionSnapshot.lookup(intentLookup, snapshot.lastIntentTag);
         this.recentEntities.addAll(SessionSnapshot.dtosToEntities(snapshot.recentEntities));
+        setUserName(snapshot.userName);
         if (snapshot.pendingQuestion != null && snapshot.pendingQuestion.slot != null) {
             this.pendingQuestion = new PendingQuestion(snapshot.pendingQuestion.intentTag,
                     snapshot.pendingQuestion.slot, snapshot.pendingQuestion.queryTemplate,

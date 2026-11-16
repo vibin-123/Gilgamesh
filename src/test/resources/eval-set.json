@@ -201,6 +201,18 @@
     {"text": "what is Kotlin good for", "expected": "entity_advantages"},
     {"text": "can you tell me about JavaScript", "expected": "entity_about"},
 
+    {"text": "current time in New York", "expected": "datetime"},
+    {"text": "tell me the date in Sydney", "expected": "datetime"},
+    {"text": "do you know the time in Nairobi right now", "expected": "datetime"},
+
+    {"text": "is it going to rain in Mumbai", "expected": "weather"},
+    {"text": "forecast for Chicago tomorrow", "expected": "weather"},
+    {"text": "how hot is it in Cairo", "expected": "weather"},
+
+    {"text": "tell me my name", "expected": "user_name_recall"},
+    {"text": "do you remember what I am called", "expected": "user_name_recall"},
+    {"text": "can you say my name", "expected": "user_name_recall"},
+
     {"text": "book me a flight to Tokyo", "expected": null},
     {"text": "what is the capital of France", "expected": null},
     {"text": "how do I cook pasta", "expected": null},

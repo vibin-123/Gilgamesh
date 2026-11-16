@@ -75,10 +75,12 @@ class ConversationStoreTest {
         ConversationStore store = new ConversationStore(tempDir.resolve("session.json"));
         ConversationContext context = populatedContext();
         context.setPendingQuestion(new PendingQuestion("weather", PendingQuestion.SLOT_LOCATION, "weather in %s"));
+        context.setUserName("Sam");
         store.save(context.snapshot());
 
         ConversationContext restored = new ConversationContext();
         restored.restore(store.load().orElseThrow(), intents::get);
+        assertEquals("Sam", restored.getUserName(), "the user's name is saved with the session");
 
         PendingQuestion pending = restored.takePendingQuestion();
         assertNotNull(pending);

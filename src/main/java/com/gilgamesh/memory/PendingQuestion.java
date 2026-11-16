@@ -15,7 +15,8 @@ import java.util.List;
  * A pending question is only valid for the very next user message.
  *
  * @param intentTag     the intent that asked the question
- * @param slot          what kind of answer is expected: {@link #SLOT_LOCATION}, {@link #SLOT_ENTITY} or {@link #SLOT_CHOICE}
+ * @param slot          what kind of answer is expected: {@link #SLOT_LOCATION}, {@link #SLOT_ENTITY},
+ *                      {@link #SLOT_NAME} or {@link #SLOT_CHOICE}
  * @param queryTemplate the full question to run once the slot is known, with %s for the value (e.g. "weather in %s")
  * @param options       for {@link #SLOT_CHOICE}: the candidate messages the user can pick from; otherwise empty
  */
@@ -24,6 +25,7 @@ public record PendingQuestion(String intentTag, String slot, String queryTemplat
     public static final String SLOT_LOCATION = "location";
     public static final String SLOT_ENTITY = "entity";
     public static final String SLOT_CHOICE = "choice";
+    public static final String SLOT_NAME = "name";
 
     public PendingQuestion {
         options = options != null ? List.copyOf(options) : List.of();
