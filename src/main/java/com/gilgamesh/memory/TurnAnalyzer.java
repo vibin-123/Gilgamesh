@@ -3,7 +3,6 @@ package com.gilgamesh.memory;
 import com.gilgamesh.nlp.EntityExtractor;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,21 +61,6 @@ public class TurnAnalyzer {
         Pattern.compile("(?i)(?:resume|revisit|continue\\s+with)\\s+(.+)"),
         Pattern.compile("(?i)(?:about|regarding)\\s+(.+?)\\s+again"),
         Pattern.compile("(?i)(?:what|where|how)\\s+(?:were|was)\\s+(?:we|i)\\s+(?:saying|talking|discussing)\\s+about\\s+(.+)")
-    );
-
-    // Known topic keywords mapped to their intent-tag prefixes for matching
-    // This allows "back to Java" to match suspended topic "java_info"
-    private static final Map<String, String> TOPIC_KEYWORD_TO_PREFIX = Map.ofEntries(
-        Map.entry("java", "java"),
-        Map.entry("python", "python"),
-        Map.entry("gilgamesh", "gilgamesh"),
-        Map.entry("weather", "weather"),
-        Map.entry("time", "time"),
-        Map.entry("date", "date"),
-        Map.entry("nlp", "nlp"),
-        Map.entry("chatbot", "gilgamesh"),
-        Map.entry("creator", "tech_creator"),
-        Map.entry("advantages", "tech_advantages")
     );
 
     public TurnAnalyzer(EntityExtractor entityExtractor) {
@@ -236,7 +220,8 @@ public class TurnAnalyzer {
 
     /**
      * Checks whether a resume target keyword matches any topic on the suspended stack.
-     * Uses keyword-to-prefix mapping for fuzzy matching (e.g. "java" matches "java_info").
+     * Topics are named after their subject ("Java"), so "back to java" matches directly;
+     * a containment check also accepts partial names.
      *
      * @param resumeTarget The extracted topic keyword
      * @param context      The conversation context with the topic stack
@@ -249,11 +234,6 @@ public class TurnAnalyzer {
         for (TopicState ts : suspended) {
             // Direct match: target equals the topic ID
             if (ts.getTopicId().equalsIgnoreCase(resumeTarget)) {
-                return true;
-            }
-            // Prefix match: target is a keyword that maps to a topic prefix
-            String prefix = TOPIC_KEYWORD_TO_PREFIX.get(resumeTarget);
-            if (prefix != null && ts.getTopicId().toLowerCase().startsWith(prefix)) {
                 return true;
             }
             // Containment match: topic ID contains the target keyword
@@ -282,16 +262,7 @@ public class TurnAnalyzer {
                 return ts.getTopicId();
             }
         }
-        // Priority 2: Prefix match via keyword map
-        String prefix = TOPIC_KEYWORD_TO_PREFIX.get(resumeTarget);
-        if (prefix != null) {
-            for (TopicState ts : suspended) {
-                if (ts.getTopicId().toLowerCase().startsWith(prefix)) {
-                    return ts.getTopicId();
-                }
-            }
-        }
-        // Priority 3: Containment match
+        // Priority 2: Containment match
         for (TopicState ts : suspended) {
             if (ts.getTopicId().toLowerCase().contains(resumeTarget)) {
                 return ts.getTopicId();

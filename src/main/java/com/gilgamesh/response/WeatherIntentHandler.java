@@ -2,6 +2,7 @@ package com.gilgamesh.response;
 
 import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.memory.Entity;
+import com.gilgamesh.memory.PendingQuestion;
 import com.gilgamesh.model.Intent;
 import com.gilgamesh.nlp.EntityExtractor;
 
@@ -20,7 +21,7 @@ public class WeatherIntentHandler implements IntentHandler {
 
     private static final Logger LOG = Logger.getLogger(WeatherIntentHandler.class.getName());
 
-    /** Reply used when no city is known; ConversationManager recognizes it to treat the next short answer as a city. */
+    /** Reply used when no city is known. */
     public static final String ASK_CITY_PROMPT = "Which city would you like the weather for?";
 
     private final WeatherClient client;
@@ -47,6 +48,10 @@ public class WeatherIntentHandler implements IntentHandler {
             location = Optional.ofNullable(context.getMostRecentEntityByType(Entity.EntityType.LOCATION));
         }
         if (location.isEmpty()) {
+            if (context != null) {
+                // Remember the question so the next message ("Paris") is read as its answer
+                context.setPendingQuestion(new PendingQuestion("weather", PendingQuestion.SLOT_LOCATION, "weather in %s"));
+            }
             return ASK_CITY_PROMPT;
         }
 

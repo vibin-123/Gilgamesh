@@ -33,6 +33,7 @@ public class MultiTurnConversationTest {
                 new DateTimeIntentHandler(),
                 new WeatherIntentHandler(city ->
                         new com.gilgamesh.response.WeatherClient.Report(city, "Testland", 20.0, 10.0, 0)),
+                new com.gilgamesh.response.KnowledgeIntentHandler(com.gilgamesh.data.KnowledgeBase.loadDefault()),
                 new StaticIntentHandler());
         ResponseEngine responseEngine = new ResponseEngine(handlers);
         context = new ConversationContext();
@@ -63,12 +64,14 @@ public class MultiTurnConversationTest {
         String response1 = manager.processMessage("What is Java?");
         assertNotNull(response1);
         assertFalse(response1.isBlank());
-        assertEquals("about_java", context.getLastDetectedIntent().getTag(), "Turn 1 should match about_java");
+        assertEquals("entity_about", context.getLastDetectedIntent().getTag(), "Turn 1 should match entity_about");
+        assertEquals("Java", context.getCurrentTopic(), "The topic is the subject, not the intent tag");
 
         // Turn 2: Follow-up pronoun "it" -> should resolve to "Who created Java?"
         String response2 = manager.processMessage("Who created it?");
         assertNotNull(response2);
-        assertEquals("java_creator", context.getLastDetectedIntent().getTag(), "Turn 2 should match java_creator");
+        assertEquals("entity_creator", context.getLastDetectedIntent().getTag(), "Turn 2 should match entity_creator");
+        assertEquals("Java", context.getCurrentTopic(), "A follow-up stays on the same topic");
         assertTrue(response2.toLowerCase().contains("gosling") || response2.toLowerCase().contains("sun microsystems"),
                 "Response 2 should identify James Gosling as the creator of Java");
     }

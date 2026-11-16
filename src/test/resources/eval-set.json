@@ -157,9 +157,9 @@
     {"text": "tell me about programming", "expected": "about_technology"},
     {"text": "what is computer science", "expected": "about_technology"},
 
-    {"text": "can you tell me about Java", "expected": "about_java"},
-    {"text": "what's Java", "expected": "about_java"},
-    {"text": "I want to learn about Java", "expected": "about_java"},
+    {"text": "can you tell me about Java", "expected": "entity_about"},
+    {"text": "what's Java", "expected": "entity_about"},
+    {"text": "I want to learn about Java", "expected": "entity_about"},
 
     {"text": "are you better than ChatGPT", "expected": "chatbot_comparison"},
     {"text": "how are you different from ChatGPT", "expected": "chatbot_comparison"},
@@ -177,25 +177,29 @@
     {"text": "do you speak French", "expected": "languages"},
     {"text": "can you talk in other languages", "expected": "languages"},
 
-    {"text": "what's Python", "expected": "about_python"},
-    {"text": "can you tell me about Python", "expected": "about_python"},
-    {"text": "I want to learn about Python", "expected": "about_python"},
+    {"text": "what's Python", "expected": "entity_about"},
+    {"text": "can you tell me about Python", "expected": "entity_about"},
+    {"text": "I want to learn about Python", "expected": "entity_about"},
 
-    {"text": "who is the inventor of Java", "expected": "java_creator"},
-    {"text": "who came up with Java", "expected": "java_creator"},
-    {"text": "Java was created by whom", "expected": "java_creator"},
+    {"text": "who is the inventor of Java", "expected": "entity_creator"},
+    {"text": "who came up with Java", "expected": "entity_creator"},
+    {"text": "Java was created by whom", "expected": "entity_creator"},
 
-    {"text": "who is the inventor of Python", "expected": "python_creator"},
-    {"text": "who came up with Python", "expected": "python_creator"},
-    {"text": "Python was made by whom", "expected": "python_creator"},
+    {"text": "who is the inventor of Python", "expected": "entity_creator"},
+    {"text": "who came up with Python", "expected": "entity_creator"},
+    {"text": "Python was made by whom", "expected": "entity_creator"},
 
-    {"text": "why should I use Java", "expected": "java_advantages"},
-    {"text": "what is Java good for", "expected": "java_advantages"},
-    {"text": "what are the benefits of using Java", "expected": "java_advantages"},
+    {"text": "why should I use Java", "expected": "entity_advantages"},
+    {"text": "what is Java good for", "expected": "entity_advantages"},
+    {"text": "what are the benefits of using Java", "expected": "entity_advantages"},
 
-    {"text": "why should I use Python", "expected": "python_advantages"},
-    {"text": "what is Python good for", "expected": "python_advantages"},
-    {"text": "what are the benefits of using Python", "expected": "python_advantages"},
+    {"text": "why should I use Python", "expected": "entity_advantages"},
+    {"text": "what is Python good for", "expected": "entity_advantages"},
+    {"text": "what are the benefits of using Python", "expected": "entity_advantages"},
+
+    {"text": "who is the inventor of Rust", "expected": "entity_creator"},
+    {"text": "what is Kotlin good for", "expected": "entity_advantages"},
+    {"text": "can you tell me about JavaScript", "expected": "entity_about"},
 
     {"text": "book me a flight to Tokyo", "expected": null},
     {"text": "what is the capital of France", "expected": null},

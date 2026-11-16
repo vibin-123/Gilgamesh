@@ -9,7 +9,7 @@ class IntentRepositoryTest {
     @Test
     void loadsDefaultIntents() {
         IntentRepository repository = new IntentRepository();
-        assertTrue(repository.getIntents().size() >= 48);
+        assertTrue(repository.getIntents().size() >= 40);
         repository.getIntents().forEach(intent -> {
             assertNotNull(intent.getTag());
             assertFalse(intent.getPatterns().isEmpty(), "No patterns for " + intent.getTag());

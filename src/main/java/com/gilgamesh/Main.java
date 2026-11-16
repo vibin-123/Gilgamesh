@@ -7,7 +7,9 @@ import com.gilgamesh.nlp.IntentClassifier;
 import com.gilgamesh.nlp.ReferenceResolver;
 import com.gilgamesh.nlp.TextPreprocessor;
 import com.gilgamesh.response.DateTimeIntentHandler;
+import com.gilgamesh.data.KnowledgeBase;
 import com.gilgamesh.response.IntentHandler;
+import com.gilgamesh.response.KnowledgeIntentHandler;
 import com.gilgamesh.response.OpenMeteoWeatherClient;
 import com.gilgamesh.response.RepeatIntentHandler;
 import com.gilgamesh.response.ResponseEngine;
@@ -126,6 +128,7 @@ public class Main {
                 new DateTimeIntentHandler(),
                 new WeatherIntentHandler(new OpenMeteoWeatherClient()),
                 new RepeatIntentHandler(),
+                new KnowledgeIntentHandler(KnowledgeBase.loadDefault()),
                 new StaticIntentHandler());
         ResponseEngine responseEngine = new ResponseEngine(handlers);
 

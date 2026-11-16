@@ -831,24 +831,6 @@
     },
 
     {
-      "tag": "about_java",
-      "patterns": [
-        "what is Java",
-        "explain Java",
-        "tell me about Java",
-        "describe Java",
-        "what is Java language",
-        "Java programming",
-        "information about Java"
-      ],
-      "responses": [
-        "Java is a general-purpose, object-oriented programming language known for its 'write once, run anywhere' philosophy: code compiles to bytecode that runs on any machine with a JVM. ☕",
-        "Java is a statically typed, class-based language released by Sun Microsystems in 1995. It is widely used for enterprise systems, Android apps, and large backend services.",
-        "Java is one of the world's most widely used programming languages, valued for its portability, strong typing, and huge ecosystem of libraries."
-      ]
-    },
-
-    {
       "tag": "chatbot_comparison",
       "patterns": [
         "are you like ChatGPT",
@@ -926,104 +908,57 @@
     },
 
     {
-      "tag": "about_python",
+      "tag": "entity_about",
       "patterns": [
-        "what is Python",
-        "explain Python",
-        "tell me about Python",
-        "describe Python",
-        "what is Python language",
-        "Python programming",
-        "information about Python"
+        "what is {entity}",
+        "explain {entity}",
+        "tell me about {entity}",
+        "describe {entity}",
+        "what is {entity} language",
+        "{entity} programming language",
+        "information about {entity}",
+        "{entity}"
       ],
       "responses": [
-        "Python is a versatile, high-level programming language known for its clear syntax and readability. It is widely used in data science, artificial intelligence, and web development.",
-        "Python is an interpreted, general-purpose programming language designed with an emphasis on code readability and simplicity.",
-        "Python is one of the world's most popular programming languages, powering everything from machine learning models to web servers."
+        "Which programming language do you mean?"
       ]
     },
 
     {
-      "tag": "java_creator",
+      "tag": "entity_creator",
       "patterns": [
-        "who created Java",
-        "who developed Java",
-        "who is the creator of Java",
-        "who made Java",
-        "who invented Java",
-        "who built Java",
-        "who wrote Java",
-        "who designed Java",
-        "who is the author of Java"
+        "who created {entity}",
+        "who developed {entity}",
+        "who is the creator of {entity}",
+        "who made {entity}",
+        "who invented {entity}",
+        "who built {entity}",
+        "who wrote {entity}",
+        "who designed {entity}",
+        "who is the author of {entity}"
       ],
       "responses": [
-        "James Gosling created Java in 1995 while working at Sun Microsystems.",
-        "Java was created by James Gosling at Sun Microsystems in the mid-1990s.",
-        "James Gosling is widely known as the father of Java, having designed the original language and compiler at Sun Microsystems."
+        "Which programming language do you mean?"
       ]
     },
 
     {
-      "tag": "python_creator",
+      "tag": "entity_advantages",
       "patterns": [
-        "who created Python",
-        "who developed Python",
-        "who is the creator of Python",
-        "who made Python",
-        "who invented Python",
-        "who built Python",
-        "who wrote Python",
-        "who designed Python",
-        "who is the author of Python"
+        "what are {entity}'s advantages",
+        "what are the advantages of {entity}",
+        "{entity} advantages",
+        "{entity}'s advantages",
+        "advantages of {entity}",
+        "what are {entity} advantages",
+        "tell me {entity}'s advantages",
+        "tell me about {entity}'s advantages",
+        "{entity} features",
+        "benefits of {entity}",
+        "why use {entity}"
       ],
       "responses": [
-        "Python was created by Guido van Rossum and first released in 1991.",
-        "Guido van Rossum created Python in the late 1980s as a successor to the ABC language, officially releasing it in 1991.",
-        "Guido van Rossum is the creator and original Benevolent Dictator For Life (BDFL) of Python."
-      ]
-    },
-
-    {
-      "tag": "java_advantages",
-      "patterns": [
-        "what are Java's advantages",
-        "what are the advantages of Java",
-        "Java advantages",
-        "Java's advantages",
-        "advantages of Java",
-        "what are Java advantages",
-        "tell me Java's advantages",
-        "tell me about Java's advantages",
-        "Java features",
-        "benefits of Java",
-        "why use Java"
-      ],
-      "responses": [
-        "Java has several advantages: platform independence (Write Once, Run Anywhere via the JVM), strong static type safety, automatic garbage collection, and robust enterprise scalability.",
-        "Key advantages of Java include cross-platform portability, high performance with modern JIT compilers, extensive libraries, and strong multithreading support.",
-        "Java offers major advantages: write once run anywhere, strong memory management, exceptional backward compatibility, and an enormous ecosystem."
-      ]
-    },
-
-    {
-      "tag": "python_advantages",
-      "patterns": [
-        "what are Python's advantages",
-        "what are the advantages of Python",
-        "Python advantages",
-        "Python's advantages",
-        "advantages of Python",
-        "what are Python advantages",
-        "tell me Python's advantages",
-        "tell me about Python's advantages",
-        "Python features",
-        "benefits of Python",
-        "why use Python"
-      ],
-      "responses": [
-        "Python has several advantages: clear, readable syntax that accelerates development, an enormous library ecosystem, dynamic typing, and industry dominance in AI and data science.",
-        "Python's advantages include simplicity, high developer productivity, cross-platform portability, and powerful frameworks for machine learning and web development.",
-        "Key advantages of Python: easy to learn and read, versatile for scripting and large projects, and unmatched support for artificial intelligence."
+        "Which programming language do you mean?"
       ]
     }
 

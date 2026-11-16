@@ -1,0 +1,6 @@
+{
+  "intents": [
+    { "tag": "red", "patterns": ["red apple"], "responses": ["You picked red."] },
+    { "tag": "green", "patterns": ["green apple"], "responses": ["You picked green."] }
+  ]
+}

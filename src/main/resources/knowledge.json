@@ -1,0 +1,183 @@
+{
+  "entities": [
+    {
+      "name": "Java",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": [
+        "Java is a general-purpose, object-oriented programming language known for its 'write once, run anywhere' philosophy: code compiles to bytecode that runs on any machine with a JVM. ☕",
+        "Java is a statically typed, class-based language released by Sun Microsystems in 1995. It is widely used for enterprise systems, Android apps, and large backend services.",
+        "Java is one of the world's most widely used programming languages, valued for its portability, strong typing, and huge ecosystem of libraries."
+      ],
+      "creatorFact": [
+        "James Gosling created Java in 1995 while working at Sun Microsystems.",
+        "Java was created by James Gosling at Sun Microsystems in the mid-1990s.",
+        "James Gosling is widely known as the father of Java, having designed the original language and compiler at Sun Microsystems."
+      ],
+      "advantages": [
+        "Java has several advantages: platform independence (Write Once, Run Anywhere via the JVM), strong static type safety, automatic garbage collection, and robust enterprise scalability.",
+        "Key advantages of Java include cross-platform portability, high performance with modern JIT compilers, extensive libraries, and strong multithreading support.",
+        "Java offers major advantages: write once run anywhere, strong memory management, exceptional backward compatibility, and an enormous ecosystem."
+      ]
+    },
+    {
+      "name": "Python",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": [
+        "Python is a versatile, high-level programming language known for its clear syntax and readability. It is widely used in data science, artificial intelligence, and web development.",
+        "Python is an interpreted, general-purpose programming language designed with an emphasis on code readability and simplicity.",
+        "Python is one of the world's most popular programming languages, powering everything from machine learning models to web servers."
+      ],
+      "creatorFact": [
+        "Python was created by Guido van Rossum and first released in 1991.",
+        "Guido van Rossum created Python in the late 1980s as a successor to the ABC language, officially releasing it in 1991.",
+        "Guido van Rossum is the creator and original Benevolent Dictator For Life (BDFL) of Python."
+      ],
+      "advantages": [
+        "Python has several advantages: clear, readable syntax that accelerates development, an enormous library ecosystem, dynamic typing, and industry dominance in AI and data science.",
+        "Python's advantages include simplicity, high developer productivity, cross-platform portability, and powerful frameworks for machine learning and web development.",
+        "Key advantages of Python: easy to learn and read, versatile for scripting and large projects, and unmatched support for artificial intelligence."
+      ]
+    },
+    {
+      "name": "JavaScript",
+      "type": "LANGUAGE",
+      "aliases": ["JS"],
+      "about": ["JavaScript is the programming language of the web: it runs in every browser to make pages interactive, and on servers through Node.js."],
+      "creatorFact": ["JavaScript was created by Brendan Eich at Netscape in 1995."],
+      "advantages": ["JavaScript's advantages: it runs everywhere a browser does, has a huge package ecosystem (npm), and lets one language cover both front end and back end."]
+    },
+    {
+      "name": "TypeScript",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["TypeScript is a superset of JavaScript that adds static types and compiles down to plain JavaScript."],
+      "creatorFact": ["TypeScript was created at Microsoft, led by Anders Hejlsberg, and first released in 2012."],
+      "advantages": ["TypeScript's advantages: type checking catches many bugs before the code runs, editors can offer better autocomplete and refactoring, and it works with existing JavaScript code."]
+    },
+    {
+      "name": "C",
+      "type": "LANGUAGE",
+      "caseSensitive": true,
+      "aliases": ["C language"],
+      "about": ["C is a low-level, compiled programming language that gives direct control over memory. Operating systems such as Unix and Linux are written in it."],
+      "creatorFact": ["C was created by Dennis Ritchie at Bell Labs in the early 1970s."],
+      "advantages": ["C's advantages: it is very fast, runs on almost any hardware, and gives precise control over memory, which is why it is used for operating systems and embedded devices."]
+    },
+    {
+      "name": "C++",
+      "type": "LANGUAGE",
+      "aliases": ["cpp"],
+      "about": ["C++ is a compiled language that extends C with classes, templates and other high-level features while keeping low-level control."],
+      "creatorFact": ["C++ was created by Bjarne Stroustrup at Bell Labs, starting in 1979 as 'C with Classes'; it was named C++ in 1983."],
+      "advantages": ["C++'s advantages: high performance, fine control over memory and hardware, and powerful abstractions, which make it popular for games, browsers and trading systems."]
+    },
+    {
+      "name": "C#",
+      "type": "LANGUAGE",
+      "aliases": ["csharp", "C sharp"],
+      "about": ["C# is a modern, object-oriented language from Microsoft that runs on the .NET platform. It is used for desktop apps, web services, and games built with Unity."],
+      "creatorFact": ["C# was designed at Microsoft by a team led by Anders Hejlsberg and released in 2000."],
+      "advantages": ["C#'s advantages: a clean, strongly typed syntax, excellent tooling, automatic memory management, and a large standard library through .NET."]
+    },
+    {
+      "name": "Go",
+      "type": "LANGUAGE",
+      "caseSensitive": true,
+      "aliases": ["golang", "Go language"],
+      "about": ["Go is a compiled language from Google designed for simplicity and for building fast, concurrent network services."],
+      "creatorFact": ["Go was designed at Google by Robert Griesemer, Rob Pike and Ken Thompson, and released publicly in 2009."],
+      "advantages": ["Go's advantages: a small, easy-to-learn syntax, very fast compilation, built-in concurrency with goroutines, and single-file binaries that are simple to deploy."]
+    },
+    {
+      "name": "Rust",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["Rust is a systems programming language focused on memory safety and performance, without needing a garbage collector."],
+      "creatorFact": ["Rust was started by Graydon Hoare in 2006 and sponsored by Mozilla; version 1.0 was released in 2015."],
+      "advantages": ["Rust's advantages: its compiler prevents whole classes of memory bugs and data races, it is as fast as C and C++, and it has modern tooling through Cargo."]
+    },
+    {
+      "name": "Kotlin",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["Kotlin is a modern, statically typed language that runs on the JVM and is the preferred language for Android development."],
+      "creatorFact": ["Kotlin was created by JetBrains, the company behind IntelliJ IDEA, and first announced in 2011."],
+      "advantages": ["Kotlin's advantages: concise syntax, built-in null safety, full interoperability with Java code, and first-class support for Android."]
+    },
+    {
+      "name": "Swift",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["Swift is Apple's programming language for building apps on iOS, macOS, watchOS and tvOS."],
+      "creatorFact": ["Swift was created at Apple, led by Chris Lattner, and introduced in 2014."],
+      "advantages": ["Swift's advantages: safe and readable syntax, strong performance, and tight integration with Apple's platforms and tools."]
+    },
+    {
+      "name": "Ruby",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["Ruby is a dynamic, object-oriented language designed to be pleasant to write. It is best known for the Ruby on Rails web framework."],
+      "creatorFact": ["Ruby was created by Yukihiro 'Matz' Matsumoto in Japan and first released in 1995."],
+      "advantages": ["Ruby's advantages: expressive, readable syntax, high developer productivity, and a mature web framework in Ruby on Rails."]
+    },
+    {
+      "name": "PHP",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["PHP is a scripting language made for web development. It powers a large share of websites, including those built on WordPress."],
+      "creatorFact": ["PHP was created by Rasmus Lerdorf, who released the first version in 1995."],
+      "advantages": ["PHP's advantages: it is easy to deploy on almost any web host, simple to get started with, and backed by a large ecosystem of frameworks such as Laravel."]
+    },
+    {
+      "name": "Scala",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["Scala is a JVM language that combines object-oriented and functional programming. It is widely used for data processing with Apache Spark."],
+      "creatorFact": ["Scala was created by Martin Odersky at EPFL in Switzerland and first released in 2004."],
+      "advantages": ["Scala's advantages: a powerful type system, concise functional style, and full access to Java libraries."]
+    },
+    {
+      "name": "Perl",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["Perl is a scripting language known for its strength in text processing and system administration."],
+      "creatorFact": ["Perl was created by Larry Wall and first released in 1987."],
+      "advantages": ["Perl's advantages: excellent regular-expression support, a huge module archive (CPAN), and quick scripting for text and system tasks."]
+    },
+    {
+      "name": "R",
+      "type": "LANGUAGE",
+      "caseSensitive": true,
+      "aliases": ["R language"],
+      "about": ["R is a programming language built for statistics and data visualization, widely used by statisticians and data analysts."],
+      "creatorFact": ["R was created by Ross Ihaka and Robert Gentleman at the University of Auckland in the early 1990s."],
+      "advantages": ["R's advantages: thousands of statistics packages, excellent plotting libraries such as ggplot2, and a strong research community."]
+    },
+    {
+      "name": "SQL",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["SQL (Structured Query Language) is the standard language for storing, querying and updating data in relational databases."],
+      "creatorFact": ["SQL was developed at IBM in the early 1970s by Donald Chamberlin and Raymond Boyce."],
+      "advantages": ["SQL's advantages: it is declarative (you say what data you want, not how to fetch it), standardized across databases, and very good at combining and summarizing large tables."]
+    },
+    {
+      "name": "HTML",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["HTML (HyperText Markup Language) is the markup language that defines the structure and content of web pages."],
+      "creatorFact": ["HTML was created by Tim Berners-Lee, the inventor of the World Wide Web, in the early 1990s."],
+      "advantages": ["HTML's advantages: it is simple to learn, supported by every browser, and the foundation that every website is built on."]
+    },
+    {
+      "name": "CSS",
+      "type": "LANGUAGE",
+      "aliases": [],
+      "about": ["CSS (Cascading Style Sheets) is the language that controls how web pages look: layout, colors, fonts and animations."],
+      "creatorFact": ["CSS was first proposed by Håkon Wium Lie in 1994 and became a W3C standard in 1996."],
+      "advantages": ["CSS's advantages: it separates design from content, lets one stylesheet restyle a whole site, and adapts pages to different screen sizes."]
+    }
+  ]
+}

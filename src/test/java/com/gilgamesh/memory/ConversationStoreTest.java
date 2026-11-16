@@ -71,6 +71,23 @@ class ConversationStoreTest {
     }
 
     @Test
+    void pendingQuestionSurvivesARestart() {
+        ConversationStore store = new ConversationStore(tempDir.resolve("session.json"));
+        ConversationContext context = populatedContext();
+        context.setPendingQuestion(new PendingQuestion("weather", PendingQuestion.SLOT_LOCATION, "weather in %s"));
+        store.save(context.snapshot());
+
+        ConversationContext restored = new ConversationContext();
+        restored.restore(store.load().orElseThrow(), intents::get);
+
+        PendingQuestion pending = restored.takePendingQuestion();
+        assertNotNull(pending);
+        assertEquals(PendingQuestion.SLOT_LOCATION, pending.slot());
+        assertEquals("weather in %s", pending.queryTemplate());
+        assertNull(restored.takePendingQuestion(), "taking it clears it");
+    }
+
+    @Test
     void missingFileMeansNoSession() {
         assertTrue(new ConversationStore(tempDir.resolve("nope.json")).load().isEmpty());
     }

@@ -3,17 +3,19 @@ package com.gilgamesh;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.gilgamesh.data.KnowledgeBase;
 import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.memory.ConversationStore;
 import com.gilgamesh.memory.Entity;
 import com.gilgamesh.memory.MessageType;
+import com.gilgamesh.memory.PendingQuestion;
 import com.gilgamesh.memory.TurnAnalyzer;
 import com.gilgamesh.model.Intent;
+import com.gilgamesh.nlp.Classification;
 import com.gilgamesh.nlp.EntityExtractor;
 import com.gilgamesh.nlp.IntentClassifier;
 import com.gilgamesh.nlp.ReferenceResolver;
 import com.gilgamesh.response.ResponseEngine;
-import com.gilgamesh.response.WeatherIntentHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +27,13 @@ import java.util.regex.Pattern;
  *
  * This class encapsulates the full turn lifecycle:
  *   1. Entity extraction from user input
- *   2. Message type analysis (standalone / follow-up / context-dependent / topic-change)
- *   3. Reference resolution (pronouns, noun phrases, possessives)
- *   4. Intent classification (hybrid Jaccard + TF-IDF + context boost)
- *   5. Response generation (template processing + fallback handling)
- *   6. Context state update (entities, topic, history)
+ *   2. Slot filling: is this message the answer to a question the bot just asked?
+ *   3. Message type analysis (standalone / follow-up / context-dependent / topic-change / topic-resume)
+ *   4. Reference resolution (pronouns, noun phrases, possessives)
+ *   5. Intent classification (hybrid weighted-Jaccard + TF-IDF + context boost)
+ *   6. Clarification ("did you mean X or Y?") when two intents are nearly tied
+ *   7. Response generation (handlers + fallback)
+ *   8. Context state update (entities, topic, history)
  *
  * Decouples Main.java from internal pipeline coordination to allow independent
  * testing and future extensibility.
@@ -38,6 +42,14 @@ public class ConversationManager {
 
     private static final Logger LOG = Logger.getLogger(ConversationManager.class.getName());
     static final String ERROR_RESPONSE = "Sorry, something went wrong on my side. Please try again.";
+
+    /**
+     * Two matching intents closer than this fraction of the top score count as a tie,
+     * and the bot asks instead of guessing. Chosen from the "EVAL ambiguity" lines printed by
+     * ClassifierEvaluationTest: at 5% the question fires on 3 answers that would have been
+     * wrong and 1 that would have been right; wider margins interrupt correct answers too often.
+     */
+    static final double AMBIGUITY_MARGIN = 0.05;
 
     private final EntityExtractor entityExtractor;
     private final TurnAnalyzer turnAnalyzer;
@@ -100,103 +112,212 @@ public class ConversationManager {
     private String runPipeline(String userInput) {
         // Remember state from before this turn (topic suspension below clears it)
         String topicBefore = context.getCurrentTopic();
-        String lastBotResponse = context.getLastBotResponse();
+        // A pending question only ever applies to this one message
+        PendingQuestion pending = context.takePendingQuestion();
 
         // Step 1: Extract entities from the raw user input
-        List<Entity> extractedEntities = new ArrayList<>(entityExtractor.extractEntities(userInput));
+        List<Entity> turnEntities = new ArrayList<>(entityExtractor.extractEntities(userInput));
 
-        // Step 2: Analyze the message type (standalone, follow-up, context-dependent, topic-change, topic-resume)
-        MessageType messageType = turnAnalyzer.analyze(userInput, context);
-        LOG.fine("[ConversationManager] Message type: " + messageType);
+        // Step 2: Slot filling — is this the answer to what the bot just asked?
+        String slotQuery = pending != null ? answerPendingQuestion(pending, userInput, turnEntities) : null;
 
-        // Step 3: Handle topic lifecycle events
-        if (messageType == MessageType.TOPIC_CHANGE) {
-            // Auto-suspend the current topic before switching
-            context.suspendCurrentTopic();
-            // Also evict any expired topics from the stack
-            context.clearExpiredTopics();
-        } else if (messageType == MessageType.TOPIC_RESUME) {
-            // Identify which suspended topic the user wants to resume
-            String resumeTarget = turnAnalyzer.extractResumeTarget(userInput.toLowerCase().trim());
-            String topicId = turnAnalyzer.findMatchingSuspendedTopicId(resumeTarget, context);
-            if (topicId != null) {
-                context.resumeTopic(topicId);
-                LOG.fine("[ConversationManager] Resumed topic: " + topicId);
-            } else {
-                LOG.fine("[ConversationManager] Resume target not found, treating as standalone.");
-                messageType = MessageType.STANDALONE;
+        // Step 3: Analyze the message type and handle topic lifecycle events
+        MessageType messageType = MessageType.STANDALONE;
+        if (slotQuery == null) {
+            messageType = turnAnalyzer.analyze(userInput, context);
+            LOG.fine("[ConversationManager] Message type: " + messageType);
+
+            if (messageType == MessageType.TOPIC_CHANGE) {
+                // Auto-suspend the current topic before switching
+                context.suspendCurrentTopic();
+                // Also evict any expired topics from the stack
+                context.clearExpiredTopics();
+            } else if (messageType == MessageType.TOPIC_RESUME) {
+                // Identify which suspended topic the user wants to resume
+                String resumeTarget = turnAnalyzer.extractResumeTarget(userInput.toLowerCase().trim());
+                String topicId = turnAnalyzer.findMatchingSuspendedTopicId(resumeTarget, context);
+                if (topicId != null) {
+                    context.resumeTopic(topicId);
+                    LOG.fine("[ConversationManager] Resumed topic: " + topicId);
+                } else {
+                    LOG.fine("[ConversationManager] Resume target not found, treating as standalone.");
+                    messageType = MessageType.STANDALONE;
+                }
+            }
+        }
+        boolean usesContext = messageType == MessageType.FOLLOW_UP
+                || messageType == MessageType.CONTEXT_DEPENDENT
+                || messageType == MessageType.TOPIC_RESUME;
+
+        // Step 4: Work out the full question being asked
+        String resolvedInput = userInput;
+        if (slotQuery != null) {
+            resolvedInput = slotQuery;
+        } else {
+            if (usesContext) {
+                // "who created it?" -> "who created Java?"
+                resolvedInput = referenceResolver.resolveReferences(userInput, context);
+            }
+            // "and in London?" while talking about weather -> "weather in London"
+            String weatherQuery = completeWeatherFollowUp(userInput, topicBefore, turnEntities);
+            if (weatherQuery != null) {
+                resolvedInput = weatherQuery;
             }
         }
 
-        // Step 4: Resolve references using conversation context
-        // Only perform reference resolution for follow-up, context-dependent, and resumed messages
-        String resolvedInput = userInput;
-        if (messageType == MessageType.FOLLOW_UP || messageType == MessageType.CONTEXT_DEPENDENT
-                || messageType == MessageType.TOPIC_RESUME) {
-            resolvedInput = referenceResolver.resolveReferences(userInput, context);
+        // Entities that only became visible after resolution ("it" -> Java) belong to this turn too
+        if (!resolvedInput.equals(userInput)) {
+            for (Entity entity : entityExtractor.extractEntities(resolvedInput)) {
+                if (!turnEntities.contains(entity)) {
+                    turnEntities.add(entity);
+                }
+            }
         }
 
-        // Step 4b: Weather follow-ups ("and in London?", or a bare city after "Which city?")
-        String weatherQuery = completeWeatherFollowUp(userInput, topicBefore, lastBotResponse, extractedEntities);
-        if (weatherQuery != null) {
-            resolvedInput = weatherQuery;
-        }
+        // Step 5: Intent classification on the resolved input.
+        // Only follow-up style messages get the topic boost; standalone and topic-changing
+        // messages are evaluated cleanly without prior topic bias.
+        Classification classification = classifier.classifyDetailed(resolvedInput, usesContext ? context : null);
+        Intent matchedIntent = classification.intent();
 
-        // Step 5: Intent classification on the resolved input
-        // Only apply contextual topic boost for follow-up, context-dependent, and resumed messages;
-        // standalone and topic-changing messages are evaluated cleanly without prior topic bias.
-        Intent matchedIntent;
-        if (messageType == MessageType.FOLLOW_UP || messageType == MessageType.CONTEXT_DEPENDENT
-                || messageType == MessageType.TOPIC_RESUME) {
-            matchedIntent = classifier.classify(resolvedInput, context);
+        // Steps 6-7: Response
+        String response;
+        String clarification = slotQuery == null ? clarificationFor(classification, turnEntities) : null;
+        if (clarification != null) {
+            // Two intents are nearly tied: ask instead of guessing
+            response = clarification;
+            matchedIntent = null;
+        } else if (messageType == MessageType.TOPIC_RESUME) {
+            // "back to Java": acknowledge the switch, then answer if the message also asked something
+            response = "Sure, back to " + context.getCurrentTopic() + ". "
+                    + (matchedIntent != null
+                            ? responseEngine.generateResponse(matchedIntent, resolvedInput, context)
+                            : "What would you like to know?");
         } else {
-            matchedIntent = classifier.classify(resolvedInput, null);
+            response = responseEngine.generateResponse(matchedIntent, resolvedInput, context);
         }
 
-        // Step 6: Response generation
-        String response = responseEngine.generateResponse(matchedIntent, resolvedInput, context);
-
-        // Step 7: Update conversation context with entities and turn info
-        context.update(userInput, response, matchedIntent, extractedEntities);
+        // Step 8: Update conversation context with entities, topic and turn info
+        boolean understood = matchedIntent != null || messageType == MessageType.TOPIC_RESUME;
+        String topicKey = understood ? subjectOf(turnEntities) : null;
+        context.update(userInput, response, matchedIntent, turnEntities, topicKey);
 
         return response;
     }
 
+    /**
+     * The subject a turn is about: its first entity that is a "thing" (a language, a person,
+     * a concept). Places are excluded, because "weather in Paris" is about weather, not Paris.
+     *
+     * @return the subject's name, or null if the turn names no subject (the intent tag is used then)
+     */
+    private static String subjectOf(List<Entity> turnEntities) {
+        for (Entity entity : turnEntities) {
+            if (!entity.matchesType(Entity.EntityType.LOCATION)) {
+                return entity.getName();
+            }
+        }
+        return null;
+    }
+
+    // --- Slot filling ---
+
     private static final Pattern BARE_CITY = Pattern.compile("[A-Za-z][A-Za-z .'-]*");
     private static final Pattern WEATHER_WORDS = Pattern.compile("(?i)\\b(weather|forecast|temperature)\\b");
+    private static final Pattern FIRST_CHOICE = Pattern.compile("(?i)^(?:the\\s+)?(?:first|1st|1|former)(?:\\s+one)?[.!]*$");
+    private static final Pattern SECOND_CHOICE = Pattern.compile("(?i)^(?:the\\s+)?(?:second|2nd|2|latter)(?:\\s+one)?[.!]*$");
 
     /**
-     * If the conversation was about weather, rewrites a short follow-up into a full
-     * weather query so the classifier routes it to the weather intent:
-     * a bare city after the bot asked "Which city...?", or "and in London?".
+     * Tries to read the message as the answer to the question the bot just asked.
      *
-     * @param extractedEntities mutable list; a LOCATION is added when a bare city is recognized
+     * @param turnEntities mutable list; a LOCATION is added when the answer is a city
+     * @return the full question to run with the slot filled in (e.g. "weather in Paris"),
+     *         or null if the message is not an answer and should be handled normally
+     */
+    private String answerPendingQuestion(PendingQuestion pending, String userInput, List<Entity> turnEntities) {
+        String trimmed = userInput.trim();
+
+        switch (pending.slot()) {
+            case PendingQuestion.SLOT_CHOICE -> {
+                List<String> options = pending.options();
+                if (options.size() >= 1 && FIRST_CHOICE.matcher(trimmed).matches()) return options.get(0);
+                if (options.size() >= 2 && SECOND_CHOICE.matcher(trimmed).matches()) return options.get(1);
+                return null;
+            }
+            case PendingQuestion.SLOT_ENTITY -> {
+                String subject = subjectOf(turnEntities);
+                return subject != null ? String.format(pending.queryTemplate(), subject) : null;
+            }
+            case PendingQuestion.SLOT_LOCATION -> {
+                // A short reply that is not itself something the bot understands ("no", "thanks") is the city
+                if (!BARE_CITY.matcher(trimmed).matches() || trimmed.split("\\s+").length > 3
+                        || WEATHER_WORDS.matcher(trimmed).find()
+                        || classifier.classifyDetailed(trimmed, null).isMatch()) {
+                    return null;
+                }
+                Optional<Entity> city = entityExtractor.toLocation(trimmed);
+                if (city.isEmpty()) return null;
+                turnEntities.add(city.get());
+                return String.format(pending.queryTemplate(), city.get().getName());
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * If the conversation was about weather, rewrites "and in London?" into a full
+     * weather query so the classifier routes it to the weather intent.
+     *
      * @return the rewritten query, or null if this isn't a weather follow-up
      */
-    private String completeWeatherFollowUp(String userInput, String topicBefore, String lastBotResponse,
-                                           List<Entity> extractedEntities) {
+    private String completeWeatherFollowUp(String userInput, String topicBefore, List<Entity> turnEntities) {
         if (!"weather".equals(topicBefore) || WEATHER_WORDS.matcher(userInput).find()) {
             return null;
         }
-
-        // Answer to "Which city would you like the weather for?"
-        String trimmed = userInput.trim();
-        if (lastBotResponse != null && lastBotResponse.contains(WeatherIntentHandler.ASK_CITY_PROMPT)
-                && BARE_CITY.matcher(trimmed).matches() && trimmed.split("\\s+").length <= 3) {
-            Optional<Entity> city = entityExtractor.toLocation(trimmed);
-            if (city.isPresent()) {
-                extractedEntities.add(city.get());
-                return "weather in " + city.get().getName();
-            }
-        }
-
-        // "and in London?"
-        for (Entity entity : extractedEntities) {
+        for (Entity entity : turnEntities) {
             if (entity.matchesType(Entity.EntityType.LOCATION)) {
                 return "weather in " + entity.getName();
             }
         }
         return null;
+    }
+
+    // --- Clarification ("did you mean") ---
+
+    /**
+     * If the top two intents are nearly tied, builds a "did you mean" question and
+     * registers it as the pending question so "the first one" works as an answer.
+     *
+     * @return the question to ask, or null if the classification is clear enough
+     */
+    private String clarificationFor(Classification classification, List<Entity> turnEntities) {
+        if (!classification.isAmbiguous(AMBIGUITY_MARGIN)) {
+            return null;
+        }
+        String first = exampleOf(classification.topIntent(), turnEntities);
+        String second = exampleOf(classification.runnerUp(), turnEntities);
+        if (first == null || second == null) {
+            return null;
+        }
+        context.setPendingQuestion(PendingQuestion.choice(List.of(first, second)));
+        return "I'm not sure which you mean: \"" + first + "\" or \"" + second
+                + "\"? You can say 'first' or 'second', or rephrase.";
+    }
+
+    /** A representative phrase for an intent: its first pattern, with {entity} filled in from this turn. */
+    private static String exampleOf(Intent intent, List<Entity> turnEntities) {
+        if (intent == null || intent.getPatterns() == null || intent.getPatterns().isEmpty()) {
+            return null;
+        }
+        String example = intent.getPatterns().get(0);
+        if (example.contains(KnowledgeBase.ENTITY_PLACEHOLDER)) {
+            String subject = subjectOf(turnEntities);
+            if (subject == null) return null;
+            example = example.replace(KnowledgeBase.ENTITY_PLACEHOLDER, subject);
+        }
+        return example;
     }
 
     /**

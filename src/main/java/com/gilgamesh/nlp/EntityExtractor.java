@@ -2,6 +2,7 @@ package com.gilgamesh.nlp;
 
 import java.util.logging.Logger;
 
+import com.gilgamesh.data.KnowledgeBase;
 import com.gilgamesh.memory.Entity;
 import com.gilgamesh.memory.Entity.EntityType;
 import com.gilgamesh.memory.Entity.GrammaticalNumber;
@@ -32,29 +33,8 @@ public class EntityExtractor {
     private static final Map<String, String> ENTITY_CANONICAL_NAMES = new LinkedHashMap<>();
 
     static {
-        // Programming languages
-        registerEntity("java", EntityType.LANGUAGE);
-        registerEntity("python", EntityType.LANGUAGE);
-        registerEntity("javascript", EntityType.LANGUAGE);
-        registerEntity("typescript", EntityType.LANGUAGE);
-        registerEntity("c", EntityType.LANGUAGE);
-        registerEntity("c++", EntityType.LANGUAGE);
-        registerEntity("cpp", EntityType.LANGUAGE);
-        registerEntity("c#", EntityType.LANGUAGE);
-        registerEntity("csharp", EntityType.LANGUAGE);
-        registerEntity("ruby", EntityType.LANGUAGE);
-        registerEntity("go", EntityType.LANGUAGE);
-        registerEntity("golang", EntityType.LANGUAGE);
-        registerEntity("rust", EntityType.LANGUAGE);
-        registerEntity("swift", EntityType.LANGUAGE);
-        registerEntity("kotlin", EntityType.LANGUAGE);
-        registerEntity("scala", EntityType.LANGUAGE);
-        registerEntity("php", EntityType.LANGUAGE);
-        registerEntity("perl", EntityType.LANGUAGE);
-        registerEntity("r", EntityType.LANGUAGE);
-        registerEntity("sql", EntityType.LANGUAGE);
-        registerEntity("html", EntityType.LANGUAGE);
-        registerEntity("css", EntityType.LANGUAGE);
+        // Programming languages are not listed here: they come from knowledge.json
+        // (see KnowledgeBase), so adding a language needs no code change.
 
         // People
         registerEntity("james gosling", EntityType.PERSON);
@@ -80,9 +60,6 @@ public class EntityExtractor {
         registerEntity("deep learning", EntityType.CONCEPT);
 
         // Canonical name mappings for aliases
-        ENTITY_CANONICAL_NAMES.put("cpp", "C++");
-        ENTITY_CANONICAL_NAMES.put("csharp", "C#");
-        ENTITY_CANONICAL_NAMES.put("golang", "Go");
         ENTITY_CANONICAL_NAMES.put("gosling", "James Gosling");
         ENTITY_CANONICAL_NAMES.put("guido", "Guido van Rossum");
         ENTITY_CANONICAL_NAMES.put("nlp", "NLP");
@@ -91,6 +68,25 @@ public class EntityExtractor {
 
     private static void registerEntity(String name, EntityType type) {
         KNOWN_ENTITIES.put(name.toLowerCase(), type);
+    }
+
+    private final KnowledgeBase knowledgeBase;
+
+    /** Creates an extractor backed by the bundled knowledge.json. */
+    public EntityExtractor() {
+        this(KnowledgeBase.loadDefault());
+    }
+
+    public EntityExtractor(KnowledgeBase knowledgeBase) {
+        this.knowledgeBase = knowledgeBase;
+    }
+
+    private static EntityType typeOf(KnowledgeBase.Entry entry) {
+        try {
+            return EntityType.valueOf(entry.getType());
+        } catch (RuntimeException e) {
+            return EntityType.GENERAL;
+        }
     }
 
     // Syntactic extraction patterns — captures [X] from common question forms
@@ -137,6 +133,14 @@ public class EntityExtractor {
             foundEntityNames.add(location.getName().toLowerCase());
         });
 
+        // Strategy 1a: subjects from the knowledge base (programming languages), in reading order
+        for (KnowledgeBase.Entry entry : knowledgeBase.findEntries(userInput)) {
+            if (foundEntityNames.add(entry.getName().toLowerCase())) {
+                entities.add(new Entity(entry.getName(), typeOf(entry)));
+            }
+        }
+
+        // Strategy 1b: the built-in catalog (people, the bot, concepts)
         for (String entityName : sortedNames) {
             if (containsWholeWord(inputLower, entityName)) {
                 String canonicalName = getCanonicalName(entityName);
@@ -158,8 +162,11 @@ public class EntityExtractor {
                     extracted = cleanExtractedEntity(extracted);
                     if (!extracted.isBlank() && extracted.length() > 1 && !IGNORED_EXTRACTIONS.contains(extracted.toLowerCase())) {
                         // Check if it's a known entity we might have missed
-                        EntityType type = KNOWN_ENTITIES.getOrDefault(extracted.toLowerCase(), EntityType.GENERAL);
-                        String canonicalName = getCanonicalName(extracted);
+                        // (e.g. lowercase "go", which only counts as the language in "what is go")
+                        KnowledgeBase.Entry known = knowledgeBase.find(extracted);
+                        EntityType type = known != null ? typeOf(known)
+                                : KNOWN_ENTITIES.getOrDefault(extracted.toLowerCase(), EntityType.GENERAL);
+                        String canonicalName = known != null ? known.getName() : getCanonicalName(extracted);
                         if (!foundEntityNames.contains(canonicalName.toLowerCase())) {
                             entities.add(new Entity(canonicalName, type));
                             foundEntityNames.add(canonicalName.toLowerCase());

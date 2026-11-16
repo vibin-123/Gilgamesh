@@ -60,12 +60,26 @@ class ClassifierEvaluationTest {
         int[] sweepInScope = new int[thresholds.length];
         int[] sweepOutOfScope = new int[thresholds.length];
 
+        // Ambiguity: how often would a "did you mean?" question fire, and would it have helped?
+        double[] margins = {0.0, 0.02, 0.05, 0.10, 0.20};
+        int[] ambiguousButRight = new int[margins.length];
+        int[] ambiguousAndWrong = new int[margins.length];
+
         for (EvalCase evalCase : evalSet.cases) {
             Classification classification = classifier.classifyDetailed(evalCase.text, null);
             Intent result = classification.intent();
             String got = result == null ? null : result.getTag();
 
             String topTag = classification.topIntent() == null ? null : classification.topIntent().getTag();
+            for (int m = 0; m < margins.length; m++) {
+                if (classification.isAmbiguous(margins[m])) {
+                    if (evalCase.expected != null && evalCase.expected.equals(topTag)) {
+                        ambiguousButRight[m]++;
+                    } else {
+                        ambiguousAndWrong[m]++;
+                    }
+                }
+            }
             for (int i = 0; i < thresholds.length; i++) {
                 boolean accepted = topTag != null && classification.score() >= thresholds[i];
                 if (evalCase.expected == null) {
@@ -105,6 +119,11 @@ class ClassifierEvaluationTest {
         for (int i = 0; i < thresholds.length; i++) {
             System.out.println(String.format("EVAL sweep threshold %.2f: in-scope %d/%d, out-of-scope %d/%d",
                     thresholds[i], sweepInScope[i], inScope, sweepOutOfScope[i], outOfScope));
+        }
+        for (int m = 0; m < margins.length; m++) {
+            System.out.println(String.format(
+                    "EVAL ambiguity margin %.2f: would ask on %d wrong answers and %d right answers",
+                    margins[m], ambiguousAndWrong[m], ambiguousButRight[m]));
         }
         confusions.entrySet().stream()
                 .filter(e -> e.getValue() > 1)

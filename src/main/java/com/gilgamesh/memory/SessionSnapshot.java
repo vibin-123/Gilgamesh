@@ -15,7 +15,8 @@ import java.util.function.Function;
  */
 public class SessionSnapshot {
 
-    public static final int CURRENT_VERSION = 1;
+    /** Version 2: topics are subjects ("Java") instead of intent tags; adds pendingQuestion. */
+    public static final int CURRENT_VERSION = 2;
 
     public int version = CURRENT_VERSION;
     public long savedAtMillis;
@@ -27,6 +28,15 @@ public class SessionSnapshot {
     public List<TurnDto> history = new ArrayList<>();
     /** Suspended topics, most recent first. */
     public List<TopicDto> topicStack = new ArrayList<>();
+    /** The question the bot was waiting on, or null. */
+    public PendingDto pendingQuestion;
+
+    public static class PendingDto {
+        public String intentTag;
+        public String slot;
+        public String queryTemplate;
+        public List<String> options = new ArrayList<>();
+    }
 
     public static class EntityDto {
         public String name;

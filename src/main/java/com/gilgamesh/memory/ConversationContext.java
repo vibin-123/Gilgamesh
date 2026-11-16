@@ -53,6 +53,7 @@ public class ConversationContext {
     private String lastUserMessage;
     private String lastBotResponse;
     private String currentTopic;
+    private PendingQuestion pendingQuestion;
     private final List<ConversationTurn> history;
     private final List<Entity> recentEntities;
     private final Deque<TopicState> topicStack;
@@ -108,6 +109,21 @@ public class ConversationContext {
      */
     public synchronized void update(String userMessage, String botResponse, Intent detectedIntent,
                                      List<Entity> entities) {
+        update(userMessage, botResponse, detectedIntent, entities, null);
+    }
+
+    /**
+     * Updates the context with the latest interaction and an explicit topic.
+     *
+     * @param userMessage    The message sent by the user
+     * @param botResponse    The response returned by the bot
+     * @param detectedIntent The intent matched by the classifier (can be null)
+     * @param entities       Entities extracted from this turn
+     * @param topicKey       What this turn was about (e.g. "Java"). If null, the intent tag is used;
+     *                       if there is no intent either, the current topic is kept.
+     */
+    public synchronized void update(String userMessage, String botResponse, Intent detectedIntent,
+                                     List<Entity> entities, String topicKey) {
         // Clear expired context first using the timestamp before this update is applied
         clearExpiredContext();
 
@@ -115,10 +131,9 @@ public class ConversationContext {
         this.lastBotResponse = botResponse;
         this.lastDetectedIntent = detectedIntent;
 
-        // Current topic logic:
-        // If an intent is matched, set the topic to the intent tag.
-        // Otherwise, preserve the current topic.
-        if (detectedIntent != null) {
+        if (topicKey != null && !topicKey.isBlank()) {
+            this.currentTopic = topicKey;
+        } else if (detectedIntent != null) {
             this.currentTopic = detectedIntent.getTag();
         }
 
@@ -307,6 +322,33 @@ public class ConversationContext {
         LOG.fine("[ConversationContext] Memory cleared.");
     }
 
+    // --- Slot filling: the question the bot is waiting on ---
+
+    /**
+     * Records that the bot just asked the user something and expects the next
+     * message to be the answer.
+     */
+    public synchronized void setPendingQuestion(PendingQuestion pendingQuestion) {
+        this.pendingQuestion = pendingQuestion;
+    }
+
+    /**
+     * Returns the pending question and clears it, so it only ever applies to one user message.
+     *
+     * @return the pending question, or null if the bot is not waiting on an answer
+     */
+    public synchronized PendingQuestion takePendingQuestion() {
+        clearExpiredContext();
+        PendingQuestion pending = this.pendingQuestion;
+        this.pendingQuestion = null;
+        return pending;
+    }
+
+    /** Returns the pending question without clearing it (for inspection and tests). */
+    public synchronized PendingQuestion peekPendingQuestion() {
+        return pendingQuestion;
+    }
+
     // --- Persistence: snapshot & restore ---
 
     /**
@@ -321,6 +363,13 @@ public class ConversationContext {
         snapshot.lastBotResponse = lastBotResponse;
         snapshot.lastIntentTag = lastDetectedIntent != null ? lastDetectedIntent.getTag() : null;
         snapshot.recentEntities = SessionSnapshot.entitiesToDtos(recentEntities);
+        if (pendingQuestion != null) {
+            snapshot.pendingQuestion = new SessionSnapshot.PendingDto();
+            snapshot.pendingQuestion.intentTag = pendingQuestion.intentTag();
+            snapshot.pendingQuestion.slot = pendingQuestion.slot();
+            snapshot.pendingQuestion.queryTemplate = pendingQuestion.queryTemplate();
+            snapshot.pendingQuestion.options = new ArrayList<>(pendingQuestion.options());
+        }
         for (ConversationTurn turn : history) {
             snapshot.history.add(SessionSnapshot.TurnDto.from(turn));
         }
@@ -348,6 +397,11 @@ public class ConversationContext {
         this.lastBotResponse = snapshot.lastBotResponse;
         this.lastDetectedIntent = SessionSnapshot.lookup(intentLookup, snapshot.lastIntentTag);
         this.recentEntities.addAll(SessionSnapshot.dtosToEntities(snapshot.recentEntities));
+        if (snapshot.pendingQuestion != null && snapshot.pendingQuestion.slot != null) {
+            this.pendingQuestion = new PendingQuestion(snapshot.pendingQuestion.intentTag,
+                    snapshot.pendingQuestion.slot, snapshot.pendingQuestion.queryTemplate,
+                    snapshot.pendingQuestion.options);
+        }
 
         if (snapshot.history != null) {
             for (SessionSnapshot.TurnDto turn : snapshot.history) {
@@ -377,6 +431,7 @@ public class ConversationContext {
         this.lastUserMessage = null;
         this.lastBotResponse = null;
         this.currentTopic = "unknown";
+        this.pendingQuestion = null;
         this.history.clear();
         this.recentEntities.clear();
         this.topicStack.clear();

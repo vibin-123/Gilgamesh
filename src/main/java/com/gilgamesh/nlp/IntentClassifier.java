@@ -3,6 +3,7 @@ package com.gilgamesh.nlp;
 import java.util.logging.Logger;
 
 import com.gilgamesh.data.IntentRepository;
+import com.gilgamesh.data.KnowledgeBase;
 import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.model.Intent;
 
@@ -42,7 +43,22 @@ public class IntentClassifier {
     private final Map<Intent, List<PatternData>> patternCache = new HashMap<>();
     private double confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD;
 
+    /** Tag prefix of the generic intents whose subject comes from the knowledge base. */
+    private static final String ENTITY_INTENT_PREFIX = "entity_";
+
+    private final KnowledgeBase knowledgeBase;
+
+    /** Creates a classifier that recognizes subjects from the bundled knowledge.json. */
     public IntentClassifier(IntentRepository repository, TextPreprocessor preprocessor) {
+        this(repository, preprocessor, KnowledgeBase.loadDefault());
+    }
+
+    /**
+     * @param knowledgeBase used to replace known subjects ("Java", "Rust") with the
+     *                      {entity} placeholder before matching; may be null to disable
+     */
+    public IntentClassifier(IntentRepository repository, TextPreprocessor preprocessor, KnowledgeBase knowledgeBase) {
+        this.knowledgeBase = knowledgeBase;
         this.repository = repository;
         this.preprocessor = preprocessor;
         this.tfidfVectorizer = new TfidfVectorizer();
@@ -102,7 +118,10 @@ public class IntentClassifier {
      * and the runner-up. Use {@link Classification#intent()} for the final decision.
      */
     public Classification classifyDetailed(String userInput, ConversationContext context) {
-        List<String> userTokens = preprocessor.preprocess(userInput);
+        // "who created Rust" -> "who created {entity}", so one generic pattern covers every known subject
+        String maskedInput = (knowledgeBase != null && userInput != null)
+                ? knowledgeBase.maskEntities(userInput) : userInput;
+        List<String> userTokens = preprocessor.preprocess(maskedInput);
 
         if (userTokens.isEmpty()) {
             return Classification.none(confidenceThreshold);
@@ -139,7 +158,7 @@ public class IntentClassifier {
             double finalScore = maxPatternScoreForIntent;
 
             // Context-aware intent score boost
-            if (currentTopic != null && intent.getTag().equalsIgnoreCase(currentTopic)) {
+            if (isAboutTopic(intent, currentTopic)) {
                 finalScore *= CONTEXT_BOOST_MULTIPLIER;
             }
 
@@ -167,6 +186,18 @@ public class IntentClassifier {
         }
 
         return result;
+    }
+
+    /**
+     * True if the intent continues the current topic: either the topic is this intent's tag
+     * (e.g. "weather"), or the topic is a known subject ("Java") and this is one of the
+     * generic entity intents that can answer questions about it.
+     */
+    private boolean isAboutTopic(Intent intent, String currentTopic) {
+        if (currentTopic == null) return false;
+        if (intent.getTag().equalsIgnoreCase(currentTopic)) return true;
+        return intent.getTag().startsWith(ENTITY_INTENT_PREFIX)
+                && knowledgeBase != null && knowledgeBase.find(currentTopic) != null;
     }
 
     public double getConfidenceThreshold() {

@@ -1,6 +1,8 @@
 package com.gilgamesh;
 
 import com.gilgamesh.data.IntentRepository;
+import com.gilgamesh.data.KnowledgeBase;
+import com.gilgamesh.response.KnowledgeIntentHandler;
 import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.memory.TurnAnalyzer;
 import com.gilgamesh.model.Intent;
@@ -45,7 +47,8 @@ class ConversationManagerTest {
         context = new ConversationContext();
         return new ConversationManager(extractor, new TurnAnalyzer(extractor), new ReferenceResolver(),
                 new IntentClassifier(repository, preprocessor),
-                new ResponseEngine(List.of(flaky, new WeatherIntentHandler(fakeClient), new StaticIntentHandler())),
+                new ResponseEngine(List.of(flaky, new WeatherIntentHandler(fakeClient),
+                        new KnowledgeIntentHandler(KnowledgeBase.loadDefault()), new StaticIntentHandler())),
                 context);
     }
 
@@ -82,6 +85,81 @@ class ConversationManagerTest {
 
         manager.resetContext();
         assertTrue(store.load().isEmpty());
+    }
+
+    // --- Knowledge base, subject topics, slot filling, clarification ---
+
+    @Test
+    void languageAddedOnlyAsDataIsAnsweredWithFollowUps() {
+        String about = manager.processMessage("tell me about Rust");
+        assertTrue(about.contains("Rust"), about);
+        assertEquals("Rust", context.getCurrentTopic());
+
+        String creator = manager.processMessage("who created it?");
+        assertTrue(creator.contains("Graydon Hoare"), creator);
+        assertEquals("Rust", context.getCurrentTopic(), "follow-up stays on the subject");
+
+        String advantages = manager.processMessage("what are its advantages?");
+        assertTrue(advantages.contains("Cargo"), advantages);
+    }
+
+    @Test
+    void topicCanBeLeftAndResumedBySubjectName() {
+        manager.processMessage("tell me about Rust");
+        manager.processMessage("who created it?");
+
+        manager.processMessage("what is the weather in Paris?");
+        assertEquals("weather", context.getCurrentTopic());
+        assertNotNull(context.findSuspendedTopic("Rust"), "Rust should be suspended, both turns under one topic");
+        assertEquals(2, context.findSuspendedTopic("Rust").getTurns().size());
+
+        String back = manager.processMessage("back to Rust");
+        assertTrue(back.contains("back to Rust"), back);
+        assertEquals("Rust", context.getCurrentTopic());
+
+        String advantages = manager.processMessage("what are its advantages?");
+        assertTrue(advantages.contains("Cargo"), advantages);
+    }
+
+    @Test
+    void askingWithoutASubjectPromptsAndTheAnswerFillsTheSlot() {
+        String ask = manager.processMessage("what are the advantages");
+        assertEquals(KnowledgeIntentHandler.ASK_ENTITY_PROMPT, ask);
+
+        String reply = manager.processMessage("Kotlin");
+        assertTrue(reply.contains("null safety"), reply);
+        assertNull(context.peekPendingQuestion(), "the question is answered");
+    }
+
+    @Test
+    void pendingQuestionOnlyAppliesToTheNextMessage() {
+        manager.processMessage("what is the weather like");
+        String other = manager.processMessage("thanks");
+        assertFalse(other.contains("couldn't find a place"), "'thanks' is not a city: " + other);
+        assertTrue(requestedCities.isEmpty());
+
+        // The question has lapsed, so a bare city is no longer read as its answer
+        manager.processMessage("Berlin");
+        assertTrue(requestedCities.isEmpty());
+    }
+
+    @Test
+    void nearTieAsksDidYouMeanAndAcceptsFirstOrSecond() {
+        EntityExtractor extractor = new EntityExtractor();
+        ConversationContext ctx = new ConversationContext();
+        ConversationManager ambiguous = new ConversationManager(extractor, new TurnAnalyzer(extractor),
+                new ReferenceResolver(),
+                new IntentClassifier(new IntentRepository("/intents-ambiguous.json"), new TextPreprocessor()),
+                new ResponseEngine(List.of(new StaticIntentHandler())), ctx);
+
+        String question = ambiguous.processMessage("apple");
+        assertTrue(question.contains("red apple") && question.contains("green apple"), question);
+        assertNull(ctx.getLastDetectedIntent(), "nothing is guessed while asking");
+
+        assertEquals("You picked green.", ambiguous.processMessage("second"));
+
+        // A clear message is answered directly
+        assertEquals("You picked red.", ambiguous.processMessage("red apple"));
     }
 
     @Test
