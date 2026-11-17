@@ -595,7 +595,8 @@
         "what is my name",
         "do you know my name",
         "who am I",
-        "have I told you my name"
+        "have I told you my name",
+        "do you remember my name"
       ],
       "responses": [
         "I don't know your name yet. What should I call you?"

@@ -190,6 +190,10 @@ class ConversationManagerTest {
 
         manager.processMessage("tell me about Rust");
         assertEquals("Your name is Sam.", manager.processMessage("what is my name?"));
+
+        // "my" vs "your" decides whose name is meant
+        assertEquals("Your name is Sam.", manager.processMessage("tell me my name"));
+        assertTrue(manager.processMessage("tell me your name").contains("Gilgamesh"));
     }
 
     @Test
