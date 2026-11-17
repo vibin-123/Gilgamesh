@@ -33,6 +33,27 @@ class GilgameshConfigTest {
         assertEquals(ConversationContext.DEFAULT_INACTIVITY_TIMEOUT_MS, config.inactivityTimeoutMs());
         assertEquals(ConversationStore.DEFAULT_MAX_AGE_MS, config.sessionMaxAgeMs());
         assertEquals(ConversationStore.defaultPath(), config.sessionPath());
+        assertEquals(GilgameshConfig.DEFAULT_SERVER_HOST, config.serverHost());
+        assertEquals(GilgameshConfig.DEFAULT_SERVER_PORT, config.serverPort());
+        assertEquals(GilgameshConfig.DEFAULT_SERVER_MAX_SESSIONS, config.serverMaxSessions());
+        assertEquals(GilgameshConfig.DEFAULT_SERVER_MAX_MESSAGE_LENGTH, config.serverMaxMessageLength());
+        assertEquals("127.0.0.1", config.serverHost(), "the server must not be reachable from other machines by default");
+    }
+
+    @Test
+    void webSessionsAreSavedNextToTheSessionFile() {
+        GilgameshConfig config = GilgameshConfig.of(Map.of(GilgameshConfig.SESSION_PATH, "data/chat.json"));
+        assertEquals(Path.of("data", "sessions").toAbsolutePath(), config.serverSessionDirectory());
+    }
+
+    @Test
+    void readsPortFromCommandLine() {
+        assertNull(Main.portFrom(new String[]{"--serve"}));
+        assertEquals(8080, Main.portFrom(new String[]{"--serve", "--port", "8080"}));
+        assertEquals(9000, Main.portFrom(new String[]{"--port=9000"}));
+        assertThrows(IllegalArgumentException.class, () -> Main.portFrom(new String[]{"--port", "abc"}));
+        assertThrows(IllegalArgumentException.class, () -> Main.portFrom(new String[]{"--port", "70000"}));
+        assertThrows(IllegalArgumentException.class, () -> Main.portFrom(new String[]{"--port", "--serve"}));
     }
 
     @Test

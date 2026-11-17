@@ -15,6 +15,9 @@ import java.util.Random;
  *   - Level 1: Polite rephrase prompt
  *   - Level 2: Topic & capability suggestions
  *   - Level 3+: Direct help menu directive
+ *
+ * The count of consecutive misunderstandings lives in the {@link ConversationContext}, so
+ * each conversation escalates on its own. Without a context a single local counter is used.
  */
 public class FallbackHandler {
 
@@ -38,21 +41,23 @@ public class FallbackHandler {
     );
 
     public String generateFallbackResponse(ConversationContext context) {
-        consecutiveFallbacks++;
+        int count = context != null ? context.recordFallback() : ++consecutiveFallbacks;
 
-        if (consecutiveFallbacks == 1) {
+        if (count == 1) {
             return LEVEL_1_FALLBACKS.get(random.nextInt(LEVEL_1_FALLBACKS.size()));
-        } else if (consecutiveFallbacks == 2) {
+        } else if (count == 2) {
             return LEVEL_2_FALLBACKS.get(random.nextInt(LEVEL_2_FALLBACKS.size()));
         } else {
             return LEVEL_3_FALLBACKS.get(random.nextInt(LEVEL_3_FALLBACKS.size()));
         }
     }
 
+    /** Resets the context-less counter. */
     public void reset() {
         consecutiveFallbacks = 0;
     }
 
+    /** The context-less counter; conversations with a context keep their own count there. */
     public int getConsecutiveFallbacks() {
         return consecutiveFallbacks;
     }

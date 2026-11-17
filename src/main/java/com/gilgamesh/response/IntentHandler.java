@@ -33,4 +33,12 @@ public interface IntentHandler {
     default String handle(Intent intent, String userInput, ConversationContext context) {
         return handle(intent);
     }
+
+    /**
+     * Generates a response that may carry structured data for a UI (see {@link HandlerReply}).
+     * Handlers with data to offer override this; by default it wraps the text response.
+     */
+    default HandlerReply respond(Intent intent, String userInput, ConversationContext context) {
+        return HandlerReply.text(handle(intent, userInput, context));
+    }
 }

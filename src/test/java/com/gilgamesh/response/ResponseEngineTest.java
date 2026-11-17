@@ -23,7 +23,12 @@ public class ResponseEngineTest {
         assertNotNull(fb2);
         assertNotNull(fb3);
 
-        assertEquals(3, engine.getFallbackHandler().getConsecutiveFallbacks());
+        // The count belongs to the conversation, so another conversation starts from zero
+        assertEquals(3, context.getConsecutiveFallbacks());
+        ConversationContext other = new ConversationContext();
+        engine.generateResponse(null, other);
+        assertEquals(1, other.getConsecutiveFallbacks());
+        assertEquals(3, context.getConsecutiveFallbacks());
     }
 
     @Test

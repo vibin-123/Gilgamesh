@@ -160,6 +160,52 @@ class ConversationManagerTest {
         assertTrue(requestedCities.isEmpty());
     }
 
+    // --- Structured replies ---
+
+    @Test
+    void replyReportsHowTheMessageWasUnderstood() {
+        manager.reply("tell me about Rust");
+        BotReply reply = manager.reply("who created it?");
+
+        assertTrue(reply.text().contains("Graydon Hoare"));
+        assertEquals(BotReply.Kind.ANSWER, reply.kind());
+        assertEquals("entity_creator", reply.intent());
+        assertTrue(reply.confidence() > 0.4 && reply.confidence() <= 1.0);
+        assertEquals("FOLLOW_UP", reply.messageType());
+        assertEquals("who created Rust?", reply.resolvedInput());
+        assertEquals("Rust", reply.topic());
+        assertEquals(List.of(new BotReply.EntityInfo("Rust", "LANGUAGE")), reply.entities());
+        assertNull(reply.pendingQuestion());
+    }
+
+    @Test
+    void replyKindsDistinguishAnswersQuestionsFallbacksAndErrors() {
+        BotReply weather = manager.reply("what's the weather in Paris?");
+        assertEquals(BotReply.Kind.ANSWER, weather.kind());
+        assertEquals(WeatherIntentHandler.DATA_TYPE, weather.dataType());
+        assertEquals("Paris", ((WeatherClient.Report) weather.data()).city());
+
+        BotReply fallback = manager.reply("zxqv blorp wibble");
+        assertEquals(BotReply.Kind.FALLBACK, fallback.kind());
+        assertNull(fallback.intent());
+
+        BotReply ask = manager.reply("what is the weather like");
+        assertEquals(BotReply.Kind.QUESTION, ask.kind());
+        assertEquals("location", ask.pendingQuestion().slot());
+        assertNull(ask.data());
+        manager.reply("Berlin");
+
+        manager.reply("tell me about Rust");
+        manager.reply("what is the weather in Paris?");
+        assertEquals(List.of("Rust"), manager.reply("hello").suspendedTopics().stream()
+                .filter("Rust"::equals).toList(), "earlier topics are listed so a UI can offer to resume them");
+
+        explode = true;
+        BotReply error = manager.reply("hello");
+        assertEquals(BotReply.Kind.ERROR, error.kind());
+        assertEquals(ConversationManager.ERROR_RESPONSE, error.text());
+    }
+
     // --- Date/time, user name, help ---
 
     @Test

@@ -135,11 +135,28 @@ Options:
 | `--fresh` | Start a new conversation, discarding the saved one |
 | `--debug` | Show how each message was understood (intent, score, entities) |
 | `--config <file>` | Load settings from a properties file |
+| `--serve` | Start the web API instead of the terminal chat (see below) |
+| `--port <n>` | Port for `--serve` (default 7070) |
 
 While chatting, type `help` to see what you can ask, `reset` to make the bot forget the conversation (and your name), and `quit` to exit. The conversation is saved to `~/.gilgamesh/session.json` and restored on the next start.
 
 ### Settings
 The defaults live in `src/main/resources/gilgamesh.properties`, which documents every setting (confidence threshold, context boost, memory sizes, session file). To change one, put a `gilgamesh.properties` containing only the settings you want to change in the folder you start the bot from, in `~/.gilgamesh/`, or pass it with `--config`. Invalid values are reported and replaced by the default.
+
+### Web API
+`java -jar target/gilgamesh-chatbot-1.0.0.jar --serve` starts an HTTP server on `http://127.0.0.1:7070`. Each user gets their own conversation, identified by a session id.
+
+| Request | What it does |
+|---|---|
+| `POST /api/chat` with `{"message": "hello"}` | Sends a message. The answer contains a `sessionId`; send it back with the next message to continue the same conversation. |
+| `GET /api/sessions/{id}` | The conversation so far |
+| `DELETE /api/sessions/{id}` | Forget the conversation |
+| `GET /api/intents` | Example messages by category |
+| `GET /api/health` | Whether the server is up |
+
+The `reply` in a chat answer holds more than the text: `kind` (`ANSWER`, `FALLBACK`, `CLARIFICATION`, `QUESTION`, `ERROR`), the matched `intent` and its `confidence`, the runner-up intent, `entities`, `messageType`, `resolvedInput` (the message after "it" was resolved), `topic`, `suspendedTopics`, and structured `data` for weather answers.
+
+The server listens only on this computer by default and has no login. Change `server.host` in the settings only on a network you trust.
 
 ### Measuring accuracy
 `./mvnw test` prints `EVAL` lines: accuracy on `src/test/resources/eval-set.json`, a set of phrasings the bot was *not* taught, plus every miss. Check these numbers after changing intents or classifier settings.

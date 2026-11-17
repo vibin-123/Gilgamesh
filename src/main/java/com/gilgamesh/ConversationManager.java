@@ -9,7 +9,9 @@ import com.gilgamesh.memory.ConversationStore;
 import com.gilgamesh.memory.Entity;
 import com.gilgamesh.memory.MessageType;
 import com.gilgamesh.memory.PendingQuestion;
+import com.gilgamesh.memory.TopicState;
 import com.gilgamesh.memory.TurnAnalyzer;
+import com.gilgamesh.response.HandlerReply;
 import com.gilgamesh.model.Intent;
 import com.gilgamesh.nlp.Classification;
 import com.gilgamesh.nlp.EntityExtractor;
@@ -83,16 +85,28 @@ public class ConversationManager {
      * @return The bot's response string
      */
     public String processMessage(String userInput) {
-        String response;
+        return reply(userInput).text();
+    }
+
+    /**
+     * Processes a single user message and returns the full reply: the text plus how the
+     * message was understood (intent, confidence, entities, topic). One conversation handles
+     * one message at a time.
+     *
+     * @param userInput Raw input from the user
+     * @return The reply; never null, and never an exception (failures become an ERROR reply)
+     */
+    public synchronized BotReply reply(String userInput) {
+        BotReply reply;
         try {
-            response = runPipeline(userInput);
+            reply = runPipeline(userInput);
         } catch (RuntimeException e) {
             // A failure in one turn must never take down the whole session
             LOG.log(Level.WARNING, "Error while processing message", e);
-            return ERROR_RESPONSE;
+            return BotReply.error(ERROR_RESPONSE);
         }
         persist();
-        return response;
+        return reply;
     }
 
     /**
@@ -120,7 +134,7 @@ public class ConversationManager {
         }
     }
 
-    private String runPipeline(String userInput) {
+    private BotReply runPipeline(String userInput) {
         // Remember state from before this turn (topic suspension below clears it)
         String topicBefore = context.getCurrentTopic();
         // A pending question only ever applies to this one message
@@ -193,19 +207,33 @@ public class ConversationManager {
 
         // Steps 6-7: Response
         String response;
+        HandlerReply handlerReply = null;
+        BotReply.Kind kind;
         String clarification = slotQuery == null ? clarificationFor(classification, turnEntities) : null;
         if (clarification != null) {
             // Two intents are nearly tied: ask instead of guessing
             response = clarification;
             matchedIntent = null;
+            kind = BotReply.Kind.CLARIFICATION;
         } else if (messageType == MessageType.TOPIC_RESUME) {
             // "back to Java": acknowledge the switch, then answer if the message also asked something
+            if (matchedIntent != null) {
+                handlerReply = responseEngine.respond(matchedIntent, resolvedInput, context);
+            }
             response = "Sure, back to " + context.getCurrentTopic() + ". "
-                    + (matchedIntent != null
-                            ? responseEngine.generateResponse(matchedIntent, resolvedInput, context)
-                            : "What would you like to know?");
+                    + (handlerReply != null ? handlerReply.text() : "What would you like to know?");
+            kind = BotReply.Kind.ANSWER;
         } else {
-            response = responseEngine.generateResponse(matchedIntent, resolvedInput, context);
+            handlerReply = responseEngine.respond(matchedIntent, resolvedInput, context);
+            response = handlerReply.text();
+            kind = matchedIntent != null ? BotReply.Kind.ANSWER : BotReply.Kind.FALLBACK;
+        }
+
+        // The old pending question was taken at the top of the turn, so one present now was
+        // asked by this turn's handler ("Which city?").
+        PendingQuestion asked = context.peekPendingQuestion();
+        if (asked != null && kind == BotReply.Kind.ANSWER) {
+            kind = BotReply.Kind.QUESTION;
         }
 
         // Step 8: Update conversation context with entities, topic and turn info
@@ -213,7 +241,31 @@ public class ConversationManager {
         String topicKey = understood ? subjectOf(turnEntities) : null;
         context.update(userInput, response, matchedIntent, turnEntities, topicKey);
 
-        return response;
+        // Step 9: Report how the message was understood, for UIs that want to show it
+        List<BotReply.EntityInfo> entities = new ArrayList<>();
+        for (Entity entity : turnEntities) {
+            entities.add(new BotReply.EntityInfo(entity.getName(), entity.getType().name()));
+        }
+        List<String> suspended = new ArrayList<>();
+        for (TopicState topic : context.getSuspendedTopics()) {
+            suspended.add(topic.getTopicId());
+        }
+        return new BotReply(
+                response,
+                kind,
+                matchedIntent != null ? matchedIntent.getTag() : null,
+                Math.min(1.0, classification.score()),
+                classification.runnerUp() != null ? classification.runnerUp().getTag() : null,
+                Math.min(1.0, classification.runnerUpScore()),
+                entities,
+                messageType.name(),
+                resolvedInput,
+                context.peekCurrentTopic(),
+                suspended,
+                context.getUserName(),
+                asked != null ? new BotReply.PendingInfo(asked.slot(), asked.options()) : null,
+                handlerReply != null ? handlerReply.dataType() : null,
+                handlerReply != null ? handlerReply.data() : null);
     }
 
     /**

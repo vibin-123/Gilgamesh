@@ -41,6 +41,19 @@ public class GilgameshConfig {
     public static final String INACTIVITY_MINUTES = "memory.inactivityTimeoutMinutes";
     public static final String SESSION_PATH = "session.path";
     public static final String SESSION_MAX_AGE_HOURS = "session.maxAgeHours";
+    public static final String SERVER_HOST = "server.host";
+    public static final String SERVER_PORT = "server.port";
+    public static final String SERVER_MAX_SESSIONS = "server.maxSessions";
+    public static final String SERVER_MAX_MESSAGE_LENGTH = "server.maxMessageLength";
+
+    /** Only this machine can reach the server unless the owner changes it on purpose. */
+    public static final String DEFAULT_SERVER_HOST = "127.0.0.1";
+    public static final int DEFAULT_SERVER_PORT = 7070;
+    public static final int DEFAULT_SERVER_MAX_SESSIONS = 200;
+    public static final int DEFAULT_SERVER_MAX_MESSAGE_LENGTH = 500;
+
+    /** Settings whose value is text, not a number. */
+    private static final java.util.Set<String> TEXT_SETTINGS = java.util.Set.of(SESSION_PATH, SERVER_HOST);
 
     /** A numeric setting: its built-in default and the range of values that make sense. */
     private record Setting(double defaultValue, double min, double max) {}
@@ -59,6 +72,9 @@ public class GilgameshConfig {
                 new Setting(ConversationContext.DEFAULT_INACTIVITY_TIMEOUT_MS / 60_000.0, 0, 100_000));
         NUMERIC_SETTINGS.put(SESSION_MAX_AGE_HOURS,
                 new Setting(ConversationStore.DEFAULT_MAX_AGE_MS / 3_600_000.0, 0, 100_000));
+        NUMERIC_SETTINGS.put(SERVER_PORT, new Setting(DEFAULT_SERVER_PORT, 0, 65_535));
+        NUMERIC_SETTINGS.put(SERVER_MAX_SESSIONS, new Setting(DEFAULT_SERVER_MAX_SESSIONS, 1, 100_000));
+        NUMERIC_SETTINGS.put(SERVER_MAX_MESSAGE_LENGTH, new Setting(DEFAULT_SERVER_MAX_MESSAGE_LENGTH, 1, 10_000));
     }
 
     private final Properties properties;
@@ -68,7 +84,7 @@ public class GilgameshConfig {
         this.properties = properties;
         this.source = source;
         for (String key : properties.stringPropertyNames()) {
-            if (!NUMERIC_SETTINGS.containsKey(key) && !SESSION_PATH.equals(key)) {
+            if (!NUMERIC_SETTINGS.containsKey(key) && !TEXT_SETTINGS.contains(key)) {
                 LOG.warning("Unknown setting '" + key + "' in " + source + " (ignored). Check the spelling.");
             }
         }
@@ -185,6 +201,21 @@ public class GilgameshConfig {
             path = System.getProperty("user.home") + path.substring(1);
         }
         return Paths.get(path);
+    }
+
+    /** Network address the web server listens on. */
+    public String serverHost() {
+        String raw = properties.getProperty(SERVER_HOST);
+        return raw == null || raw.isBlank() ? DEFAULT_SERVER_HOST : raw.trim();
+    }
+
+    public int serverPort() { return (int) Math.round(getDouble(SERVER_PORT)); }
+    public int serverMaxSessions() { return (int) Math.round(getDouble(SERVER_MAX_SESSIONS)); }
+    public int serverMaxMessageLength() { return (int) Math.round(getDouble(SERVER_MAX_MESSAGE_LENGTH)); }
+
+    /** Folder holding one saved conversation per web session (next to the single-user session file). */
+    public Path serverSessionDirectory() {
+        return sessionPath().toAbsolutePath().resolveSibling("sessions");
     }
 
     /** Applies the classifier settings. */

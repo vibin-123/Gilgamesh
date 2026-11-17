@@ -56,6 +56,8 @@ public class ConversationContext {
     private PendingQuestion pendingQuestion;
     /** The user's name once they have introduced themselves; kept when the conversation expires. */
     private String userName;
+    private int consecutiveFallbacks;
+    private final java.util.Map<String, String> lastResponseByIntent = new java.util.HashMap<>();
     private final List<ConversationTurn> history;
     private final List<Entity> recentEntities;
     private final Deque<TopicState> topicStack;
@@ -326,6 +328,39 @@ public class ConversationContext {
         LOG.fine("[ConversationContext] Memory cleared.");
     }
 
+    /**
+     * The current topic as it stands, without applying expiry rules first. Used to report
+     * what a turn was about right after it happened.
+     */
+    public synchronized String peekCurrentTopic() {
+        return currentTopic;
+    }
+
+    // --- Response bookkeeping (kept per conversation so users don't affect each other) ---
+
+    /** Counts one more message the bot did not understand and returns the running total. */
+    public synchronized int recordFallback() {
+        return ++consecutiveFallbacks;
+    }
+
+    /** Called when a message is understood: the next misunderstanding starts from the gentlest reply again. */
+    public synchronized void resetFallbacks() {
+        consecutiveFallbacks = 0;
+    }
+
+    public synchronized int getConsecutiveFallbacks() {
+        return consecutiveFallbacks;
+    }
+
+    /** @return the response text last used for this intent, or null (used to avoid repeating it) */
+    public synchronized String getLastResponseFor(String intentTag) {
+        return lastResponseByIntent.get(intentTag);
+    }
+
+    public synchronized void rememberResponse(String intentTag, String response) {
+        lastResponseByIntent.put(intentTag, response);
+    }
+
     // --- What the bot knows about the user ---
 
     /** @return the user's name, or null if they haven't given one */
@@ -449,6 +484,8 @@ public class ConversationContext {
         this.lastBotResponse = null;
         this.currentTopic = "unknown";
         this.pendingQuestion = null;
+        this.consecutiveFallbacks = 0;
+        this.lastResponseByIntent.clear();
         this.history.clear();
         this.recentEntities.clear();
         this.topicStack.clear();

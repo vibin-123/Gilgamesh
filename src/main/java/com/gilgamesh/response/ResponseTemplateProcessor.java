@@ -34,7 +34,8 @@ public class ResponseTemplateProcessor {
 
         List<String> templates = intent.getResponses();
         String tag = intent.getTag();
-        String previousResponse = lastUsedResponsePerIntent.get(tag);
+        // Remembered per conversation when there is one, so users don't affect each other's variety
+        String previousResponse = context != null ? context.getLastResponseFor(tag) : lastUsedResponsePerIntent.get(tag);
 
         String selected = templates.get(random.nextInt(templates.size()));
 
@@ -48,7 +49,11 @@ public class ResponseTemplateProcessor {
             }
         }
 
-        lastUsedResponsePerIntent.put(tag, selected);
+        if (context != null) {
+            context.rememberResponse(tag, selected);
+        } else {
+            lastUsedResponsePerIntent.put(tag, selected);
+        }
         return interpolateVariables(selected, context);
     }
 

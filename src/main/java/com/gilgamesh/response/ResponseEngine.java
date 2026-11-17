@@ -7,6 +7,10 @@ import java.util.List;
 
 /**
  * ResponseEngine — Generates dynamic, non-repeating, template-processed bot responses.
+ *
+ * The engine itself keeps no per-conversation state when a {@link ConversationContext} is
+ * passed in (fallback escalation and "don't repeat the last response" are stored there),
+ * so one engine can safely serve many conversations.
  */
 public class ResponseEngine {
 
@@ -39,12 +43,27 @@ public class ResponseEngine {
      * @param context   Active conversation context
      */
     public String generateResponse(Intent intent, String userInput, ConversationContext context) {
+        return respond(intent, userInput, context).text();
+    }
+
+    /**
+     * Generates a response together with any structured data the handler attached.
+     *
+     * @param intent    The matched intent (or null if fallback)
+     * @param userInput The (reference-resolved) user message, may be null
+     * @param context   Active conversation context
+     */
+    public HandlerReply respond(Intent intent, String userInput, ConversationContext context) {
         if (intent == null) {
-            return fallbackHandler.generateFallbackResponse(context);
+            return HandlerReply.text(fallbackHandler.generateFallbackResponse(context));
         }
 
         // On matched intent, reset consecutive fallback count
-        fallbackHandler.reset();
+        if (context != null) {
+            context.resetFallbacks();
+        } else {
+            fallbackHandler.reset();
+        }
 
         for (IntentHandler handler : handlers) {
             if (handler.canHandle(intent)) {
@@ -52,19 +71,20 @@ public class ResponseEngine {
                 if (handler instanceof StaticIntentHandler) {
                     String selected = templateProcessor.selectResponse(intent, context);
                     if (selected != null) {
-                        return selected;
+                        return HandlerReply.text(selected);
                     }
                 }
-                String resp = handler.handle(intent, userInput, context);
-                return templateProcessor.interpolateVariables(resp, context);
+                HandlerReply reply = handler.respond(intent, userInput, context);
+                return new HandlerReply(templateProcessor.interpolateVariables(reply.text(), context),
+                        reply.dataType(), reply.data());
             }
         }
-        
-        return fallbackHandler.generateFallbackResponse(context);
+
+        return HandlerReply.text(fallbackHandler.generateFallbackResponse(context));
     }
 
     public String generateResponse(Intent intent) {
-        return generateResponse(intent, null);
+        return generateResponse(intent, null, null);
     }
 
     public FallbackHandler getFallbackHandler() {

@@ -1,22 +1,9 @@
 package com.gilgamesh;
 
-import com.gilgamesh.data.IntentRepository;
 import com.gilgamesh.memory.ConversationContext;
 import com.gilgamesh.memory.ConversationStore;
-import com.gilgamesh.nlp.IntentClassifier;
-import com.gilgamesh.nlp.ReferenceResolver;
-import com.gilgamesh.nlp.TextPreprocessor;
-import com.gilgamesh.response.DateTimeIntentHandler;
-import com.gilgamesh.data.KnowledgeBase;
-import com.gilgamesh.response.HelpIntentHandler;
-import com.gilgamesh.response.IntentHandler;
-import com.gilgamesh.response.UserNameIntentHandler;
-import com.gilgamesh.response.KnowledgeIntentHandler;
-import com.gilgamesh.response.OpenMeteoWeatherClient;
-import com.gilgamesh.response.RepeatIntentHandler;
-import com.gilgamesh.response.ResponseEngine;
-import com.gilgamesh.response.StaticIntentHandler;
-import com.gilgamesh.response.WeatherIntentHandler;
+import com.gilgamesh.web.ApiServer;
+import com.gilgamesh.web.SessionManager;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -34,6 +21,12 @@ import java.util.logging.Logger;
 
 /**
  * Main — Entry point for the Gilgamesh Context-Aware NLP Chatbot.
+ *
+ * Two ways to run it:
+ *   (no option)   chat in the terminal
+ *   --serve       start the HTTP API (and the web UI, if it was built into the jar)
+ *
+ * Other options: --config FILE, --port N (with --serve), --fresh, --debug.
  */
 public class Main {
 
@@ -44,19 +37,58 @@ public class Main {
         // Force UTF-8 so the banner and emoji render correctly on Windows consoles
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
 
-        configureLogging(Arrays.asList(args).contains("--debug"));
+        List<String> options = Arrays.asList(args);
+        configureLogging(options.contains("--debug"));
         printBanner();
 
-        ConversationManager conversationManager;
+        GilgameshConfig config;
+        GilgameshBot bot;
+        Integer port;
         try {
-            GilgameshConfig config = GilgameshConfig.load(configFileFrom(args));
-            conversationManager = buildConversationManager(config, Arrays.asList(args).contains("--fresh"));
+            config = GilgameshConfig.load(configFileFrom(args));
+            port = portFrom(args);
+            bot = new GilgameshBot(config);
         } catch (Exception e) {
             System.err.println("Gilgamesh failed to start: " + e.getMessage());
             Logger.getLogger(Main.class.getName()).log(Level.FINE, "Startup failure", e);
             System.exit(1);
             return;
         }
+
+        if (options.contains("--serve")) {
+            serve(bot, config, port != null ? port : config.serverPort());
+        } else {
+            chatInTerminal(bot, config, options.contains("--fresh"));
+        }
+    }
+
+    // --- Web server mode ---
+
+    private static void serve(GilgameshBot bot, GilgameshConfig config, int port) {
+        SessionManager sessions = new SessionManager(bot, config.serverSessionDirectory(),
+                config.serverMaxSessions(), config.sessionMaxAgeMs());
+        ApiServer server = new ApiServer(bot, sessions, config.serverMaxMessageLength());
+        try {
+            server.start(config.serverHost(), port);
+        } catch (Exception e) {
+            System.err.println("Gilgamesh could not start the web server on " + config.serverHost() + ":" + port
+                    + " (" + e.getMessage() + "). Is the port already in use? Try --port with another number.");
+            System.exit(1);
+            return;
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
+
+        String address = "http://" + ("0.0.0.0".equals(config.serverHost()) ? "localhost" : config.serverHost())
+                + ":" + server.port();
+        System.out.println("Gilgamesh is listening on " + address);
+        System.out.println("Try: POST " + address + "/api/chat  with  {\"message\": \"hello\"}");
+        System.out.println("Press Ctrl+C to stop.");
+    }
+
+    // --- Terminal mode ---
+
+    private static void chatInTerminal(GilgameshBot bot, GilgameshConfig config, boolean fresh) {
+        ConversationManager conversationManager = restoreConversation(bot, config, fresh);
 
         System.out.println("Type your message below. Type 'quit' to exit.\n");
 
@@ -102,6 +134,25 @@ public class Main {
         scanner.close();
     }
 
+    /** Starts the terminal conversation, continuing the saved one unless --fresh was given. */
+    private static ConversationManager restoreConversation(GilgameshBot bot, GilgameshConfig config, boolean fresh) {
+        ConversationContext context = config.newContext();
+        ConversationStore store = config.newStore();
+        if (fresh) {
+            store.delete();
+        } else {
+            store.load().ifPresent(snapshot -> {
+                context.restore(snapshot, bot.getRepository()::findByTag);
+                System.out.println("(Restored your previous conversation. Type 'reset' to start over.)\n");
+            });
+        }
+        ConversationManager manager = bot.newConversation(context);
+        manager.setStore(store);
+        return manager;
+    }
+
+    // --- Command line ---
+
     /**
      * Routes java.util.logging output: WARNING and above by default,
      * everything (FINE) when --debug is passed.
@@ -116,82 +167,56 @@ public class Main {
     }
 
     /**
-     * Reads the path given with "--config <file>" or "--config=<file>".
+     * Reads the value of an option given as "--name value" or "--name=value".
      *
-     * @return the path, or null if the option wasn't used
+     * @return the value, or null if the option wasn't used
+     * @throws IllegalArgumentException if the option is there but has no value
      */
-    static Path configFileFrom(String[] args) {
+    private static String optionValue(String[] args, String name) {
         for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("--config=")) {
-                return Paths.get(args[i].substring("--config=".length()));
+            if (args[i].startsWith(name + "=")) {
+                return args[i].substring(name.length() + 1);
             }
-            if (args[i].equals("--config")) {
-                if (i + 1 >= args.length) {
-                    throw new IllegalArgumentException("--config needs a file path");
+            if (args[i].equals(name)) {
+                if (i + 1 >= args.length || args[i + 1].startsWith("--")) {
+                    throw new IllegalArgumentException(name + " needs a value");
                 }
-                return Paths.get(args[i + 1]);
+                return args[i + 1];
             }
         }
         return null;
     }
 
-    private static ConversationManager buildConversationManager(GilgameshConfig config, boolean fresh) {
-        // 1. Load intent definitions from intents.json
-        IntentRepository repository = new IntentRepository();
+    /**
+     * Reads the path given with "--config <file>" or "--config=<file>".
+     *
+     * @return the path, or null if the option wasn't used
+     */
+    static Path configFileFrom(String[] args) {
+        String value = optionValue(args, "--config");
+        return value == null ? null : Paths.get(value);
+    }
 
-        // 2. Create text preprocessor (Tokenization + Stopwords + SpellCheck + Synonyms + Stemming)
-        TextPreprocessor preprocessor = new TextPreprocessor();
-
-        // 3. Create Reference Resolver for anaphora resolution ("it", "that", "he", "she")
-        ReferenceResolver referenceResolver = new ReferenceResolver();
-
-        // 4. Create hybrid context-aware classifier, tuned from gilgamesh.properties
-        IntentClassifier classifier = new IntentClassifier(repository, preprocessor);
-        config.applyTo(classifier);
-
-        // 5. Create response engine: the first handler that accepts an intent answers it
-        OpenMeteoWeatherClient openMeteo = new OpenMeteoWeatherClient();
-        List<IntentHandler> handlers = List.of(
-                new DateTimeIntentHandler(openMeteo),
-                new WeatherIntentHandler(openMeteo),
-                new RepeatIntentHandler(),
-                new HelpIntentHandler(repository),
-                new UserNameIntentHandler(),
-                new KnowledgeIntentHandler(KnowledgeBase.loadDefault()),
-                new StaticIntentHandler());
-        ResponseEngine responseEngine = new ResponseEngine(handlers);
-
-        // 6. Create short-term conversation memory context
-        ConversationContext context = config.newContext();
-
-        // 7. Create entity extractor & turn analyzer for multi-turn discourse
-        com.gilgamesh.nlp.EntityExtractor entityExtractor = new com.gilgamesh.nlp.EntityExtractor();
-        com.gilgamesh.memory.TurnAnalyzer turnAnalyzer = new com.gilgamesh.memory.TurnAnalyzer(entityExtractor);
-
-        // 8. Create multi-turn conversation manager orchestrator
-        ConversationManager manager = new ConversationManager(
-                entityExtractor,
-                turnAnalyzer,
-                referenceResolver,
-                classifier,
-                responseEngine,
-                context
-        );
-        manager.setAmbiguityMargin(config.ambiguityMargin());
-
-        // 9. Persist the conversation between runs (--fresh discards the saved session)
-        ConversationStore store = config.newStore();
-        if (fresh) {
-            store.delete();
-        } else {
-            store.load().ifPresent(snapshot -> {
-                context.restore(snapshot, repository::findByTag);
-                System.out.println("(Restored your previous conversation. Type 'reset' to start over.)\n");
-            });
+    /**
+     * Reads the port given with "--port <n>" or "--port=<n>".
+     *
+     * @return the port, or null if the option wasn't used
+     * @throws IllegalArgumentException if the value is not a port number
+     */
+    static Integer portFrom(String[] args) {
+        String value = optionValue(args, "--port");
+        if (value == null) {
+            return null;
         }
-        manager.setStore(store);
-
-        return manager;
+        try {
+            int port = Integer.parseInt(value.trim());
+            if (port < 0 || port > 65_535) {
+                throw new NumberFormatException();
+            }
+            return port;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("--port must be a number between 0 and 65535, not '" + value + "'");
+        }
     }
 
     private static void printBanner() {
@@ -200,7 +225,7 @@ public class Main {
         System.out.println("║           ⚔  GILGAMESH NLP CHATBOT  ⚔           ║");
         System.out.println("║                                                  ║");
         System.out.println("║  A Java chatbot demonstrating core NLP concepts  ║");
-       System.out.println("║  Featuring TF-IDF, Stemming, Synonyms & Anaphora  ║");
+        System.out.println("║  Featuring TF-IDF, Stemming, Synonyms & Anaphora  ║");
         System.out.println("╚══════════════════════════════════════════════════╝");
         System.out.println();
     }

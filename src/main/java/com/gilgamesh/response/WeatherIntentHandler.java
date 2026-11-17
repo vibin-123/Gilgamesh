@@ -43,6 +43,12 @@ public class WeatherIntentHandler implements IntentHandler {
 
     @Override
     public String handle(Intent intent, String userInput, ConversationContext context) {
+        return respond(intent, userInput, context).text();
+    }
+
+    /** Answers with the weather sentence and, when the lookup succeeded, the report behind it. */
+    @Override
+    public HandlerReply respond(Intent intent, String userInput, ConversationContext context) {
         Optional<Entity> location = entityExtractor.extractLocation(userInput);
         if (location.isEmpty() && context != null) {
             location = Optional.ofNullable(context.getMostRecentEntityByType(Entity.EntityType.LOCATION));
@@ -52,20 +58,25 @@ public class WeatherIntentHandler implements IntentHandler {
                 // Remember the question so the next message ("Paris") is read as its answer
                 context.setPendingQuestion(new PendingQuestion("weather", PendingQuestion.SLOT_LOCATION, "weather in %s"));
             }
-            return ASK_CITY_PROMPT;
+            return HandlerReply.text(ASK_CITY_PROMPT);
         }
 
         String city = location.get().getName();
         try {
-            return format(client.getCurrentWeather(city));
+            WeatherClient.Report report = client.getCurrentWeather(city);
+            return new HandlerReply(format(report), DATA_TYPE, report);
         } catch (WeatherClient.WeatherException e) {
             if (e.isCityNotFound()) {
-                return "I couldn't find a place called \"" + city + "\". Could you check the spelling or try another city?";
+                return HandlerReply.text("I couldn't find a place called \"" + city
+                        + "\". Could you check the spelling or try another city?");
             }
             LOG.log(Level.WARNING, "Weather lookup failed", e);
-            return "I can't reach the weather service right now. Please try again in a moment.";
+            return HandlerReply.text("I can't reach the weather service right now. Please try again in a moment.");
         }
     }
+
+    /** Value of {@link HandlerReply#dataType()} when a {@link WeatherClient.Report} is attached. */
+    public static final String DATA_TYPE = "weather";
 
     static String format(WeatherClient.Report report) {
         double fahrenheit = report.temperatureC() * 9 / 5 + 32;

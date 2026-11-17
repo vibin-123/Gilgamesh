@@ -47,6 +47,16 @@
         </dependency>
 
         <!--
+            Javalin: a small web framework (built on Jetty) used by the optional
+            "serve" mode, which exposes the bot over HTTP for the web UI.
+        -->
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>6.7.0</version>
+        </dependency>
+
+        <!--
             OpenNLP logs through SLF4J. This no-op binding silences the
             "No SLF4J providers were found" warning at startup.
         -->
@@ -102,7 +112,20 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.gilgamesh.Main</mainClass>
                                 </transformer>
+                                <!-- Jetty finds its parts through META-INF/services files; merge them instead of keeping only one -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
+                            <filters>
+                                <!-- Signature files from signed dependencies would make the combined jar fail to start -->
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                         </configuration>
                     </execution>

@@ -21,7 +21,6 @@ import java.util.Set;
 public class TextPreprocessor {
 
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
-    private final PorterStemmer stemmer = new PorterStemmer();
     private final SynonymProvider synonymProvider = new SynonymProvider();
     private final SpellChecker spellChecker = new SpellChecker();
 
@@ -74,6 +73,10 @@ public class TextPreprocessor {
 
         // Step 1: Tokenization
         String[] rawTokens = tokenizer.tokenize(input);
+
+        // The stemmer keeps working state in its fields, so each call gets its own:
+        // several conversations may be preprocessed at the same time.
+        PorterStemmer stemmer = new PorterStemmer();
 
         List<String> processed = new ArrayList<>();
         for (String token : rawTokens) {
